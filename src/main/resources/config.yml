@@ -1,0 +1,518 @@
+# CrowdBound Configuration ${version}
+crowdbound:
+  command:
+    # Player Command. What command users will run to access their area.
+    # To define alias, just separate commands with white space.
+    player: cb crowdbound
+    # The admin command.
+    # To define alias, just separate commands with white space.
+    admin: crowd
+    # The default action for new player command call.
+    # Sub-command of main player command that will be run on first player command call.
+    # By default it is sub-command 'create'.
+    new-player-action: create
+    # The default action for player command.
+    # Sub-command of main player command that will be run on each player command call.
+    # By default it is sub-command 'go'.
+    default-action: go
+world:
+  # Friendly name for this world. Used in admin commands. Must be a single word
+  friendly-name: CrowdBound
+  # Name of the world - if it does not exist then it will be generated.
+  # It acts like a prefix for nether and end (e.g. crowdbound_world, crowdbound_world_nether, crowdbound_world_end)
+  world-name: crowdbound_world
+  generator:
+    # World seed.
+    # /!\ BentoBox currently does not support changing this value mid-game. If you do need to change it, do a full reset of your databases and worlds.
+    seed: 602103456450
+  # World difficulty setting - PEACEFUL, EASY, NORMAL, HARD
+  # Other plugins may override this setting
+  difficulty: NORMAL
+  # Allow structures to generate in the seed world
+  allow-structures: true
+  spawn-limits:
+    # Spawn limits. These override the limits set in bukkit.yml
+    # If set to a negative number, the server defaults will be used
+    monsters: -1
+    animals: -1
+    water-animals: -1
+    ambient: -1
+    # Setting to 0 will disable animal spawns, but this is not recommended. Minecraft default is 400.
+    # A negative value uses the server default
+    ticks-per-animal-spawns: -1
+    # Setting to 0 will disable monster spawns, but this is not recommended. Minecraft default is 400.
+    # A negative value uses the server default
+    ticks-per-monster-spawns: -1
+  # Radius of player area. (So distance between player starting spots is twice this)
+  # MUST BE A FACTOR OF 16. If not, it will be rounded to be one.
+  # It is the same for every dimension : Overworld, Nether and End.
+  # /!\ BentoBox currently does not support changing this value mid-game. If you do need to change it, do a full reset of your databases and worlds.
+  area-radius: 64
+  # Starting size of crowdbound spaces. This is a radius so 1 = a 2x2 area.
+  # Admins can adjust via the /boxadmin range set <player> <new range> command
+  starting-protection-range: 32
+  # Start to place players at these coordinates. This is where players will start in the
+  # world. This must be a multiple of your area radius, but the plugin will auto
+  # calculate the closest location on the grid. Players are placed around this location
+  # in a spiral manner.
+  # If none of this makes sense, leave it at 0,0.
+  start-x: 0
+  start-z: 0
+  # Maximum number of player areas in the world. Set to -1 or 0 for unlimited.
+  # If the number of areas is greater than this number, it will stop players from joining the world.
+  max-areas: -1
+  # The number of concurrent areas a player can have
+  # A value of 0 will use the BentoBox config.yml default
+  concurrent-area: 5
+  # Disallow team members from having their own area.
+  disallow-team-member-areas: false
+  # Area height
+  # It is the y coordinate of the bedrock block in the blueprint.
+  area-height: -64
+  # The maximum number of players a player can ban at any one time in this game mode.
+  # The permission crowdbound.ban.maxlimit.X where X is a number can also be used per player
+  # -1 = unlimited
+  ban-limit: -1
+  nether:
+    # Generate Nether - if this is false, the nether world will not be made and access to
+    # the nether will not occur. Other plugins may still enable portal usage.
+    # Note: Some default challenges will not be possible if there is no nether.
+    # Note that with a standard nether all players arrive at the same portal and entering a
+    # portal will return them back to their areas.
+    generate: true
+    # This option indicates if nether portals should be linked via dimensions.
+    # Option will simulate vanilla portal mechanics that links portals together
+    # or creates a new portal, if there is not a portal in that dimension.
+    # Added since 1.0.3.
+    create-and-link-portals: true
+  end:
+    # End World - if this is false, the end world will not be made and access to
+    # the end will not occur. Other plugins may still enable portal usage.
+    generate: true
+  # Mob white list - these mobs will NOT be removed when logging in or doing /crowdbound
+  remove-mobs-whitelist: []
+  # World flags. These are boolean settings for various flags for this world
+  flags:
+    DRAGON_EGG: false
+    ISLAND_RESPAWN: true
+    CREEPER_GRIEFING: false
+    PETS_STAY_AT_HOME: true
+    NATURAL_SPAWNING_OUTSIDE_RANGE: true
+    HURT_TAMED_ANIMALS: true
+    ANVIL: true
+    VISITOR_TRIGGER_RAID: true
+    TRAPPED_CHEST: true
+    ENDER_CHEST: true
+    TREES_GROWING_OUTSIDE_RANGE: true
+    BOOKSHELF: true
+    HARVEST: true
+    FROST_WALKER: true
+    PISTON_PUSH: true
+    COLLECT_LAVA: true
+    LEVER: true
+    HURT_MONSTERS: true
+    CAKE: true
+    CLEAN_SUPER_FLAT: false
+    SIGN_EDITING: true
+    TRADING: true
+    EGGS: true
+    CHEST: true
+    ENTER_EXIT_MESSAGES: true
+    PLACE_WARP: true
+    FLINT_AND_STEEL: true
+    SCULK_SENSOR: true
+    CROP_TRAMPLE: true
+    ENTITY_PORTAL_TELEPORT: false
+    DROPPER: true
+    OBSIDIAN_SCOOPING: true
+    TNT_PRIMING: true
+    COLLECT_WATER: true
+    AXOLOTL_SCOOPING: true
+    WORLD_BLOCK_EXPLODE_DAMAGE: true
+    BUTTON: true
+    COMPOSTER: true
+    CRAFTER: true
+    TRAPDOOR: true
+    EXPERIENCE_BOTTLE_THROWING: true
+    DYE: true
+    HIVE: true
+    ITEM_FRAME: true
+    CROP_PLANTING: true
+    CRAFTING: true
+    ENCHANTING: true
+    SHEARING: true
+    BOAT: true
+    BED: true
+    SPAWN_EGGS: true
+    SCULK_SHRIEKER: true
+    SMITHING: true
+    CHEST_DAMAGE: false
+    EXPERIENCE_PICKUP: true
+    PREVENT_TELEPORT_WHEN_FALLING: true
+    WORLD_TNT_DAMAGE: true
+    HOPPER: true
+    CANDLES: true
+    LEASH: true
+    BREAK_BLOCKS: true
+    MOUNT_INVENTORY: true
+    OFFLINE_REDSTONE: true
+    JUKEBOX: true
+    POTION_THROWING: true
+    SPAWNER_SPAWN_EGGS: true
+    HURT_ANIMALS: true
+    LOOM: false
+    REDSTONE: true
+    VISITOR_KEEP_INVENTORY: false
+    BUCKET: true
+    ENDER_PEARL: true
+    BELL_RINGING: true
+    DOOR: true
+    PODZOL: true
+    BREAK_HOPPERS: true
+    FURNACE: true
+    LIQUIDS_FLOWING_OUT: true
+    MINECART: true
+    FISH_SCOOPING: true
+    END_PORTAL: true
+    BREEDING: true
+    HURT_VILLAGERS: true
+    WITHER_DAMAGE: false
+    TURTLE_EGGS: true
+    BREAK_SPAWNERS: true
+    ELYTRA: true
+    COARSE_DIRT_TILLING: true
+    RIDING: true
+    ARMOR_STAND: true
+    NAME_TAG: true
+    ENDERMAN_GRIEFING: true
+    ITEM_DROP: true
+    NOTE_BLOCK: true
+    NETHER_PORTAL: true
+    REMOVE_END_EXIT_ISLAND: true
+    LECTERN: true
+    OFFLINE_GROWTH: true
+    SHULKER_BOX: true
+    GRINDSTONE: true
+    ITEM_PICKUP: true
+    BREWING: true
+    CREEPER_DAMAGE: true
+    STONECUTTING: true
+    FIRE_EXTINGUISH: true
+    ALLAY: true
+    BEACON: true
+    PRESSURE_PLATE: true
+    PLACE_BLOCKS: true
+    REMOVE_MOBS: true
+    FLOWER_POT: true
+    MILKING: true
+    DISPENSER: true
+    GATE: true
+    CHORUS_FRUIT: true
+    CONTAINER: true
+    ITEM_FRAME_DAMAGE: true
+    BARREL: true
+    COLLECT_POWDERED_SNOW: true
+    CARTOGRAPHY: true
+  # These are the default protection settings for new areas.
+  # The value is the minimum area rank required allowed to do the action
+  # Ranks are the following:
+  #   VISITOR   = 0
+  #   COOP      = 200
+  #   TRUSTED   = 400
+  #   MEMBER    = 500
+  #   SUB-OWNER = 900
+  #   OWNER     = 1000
+  default-area-flags:
+    DRAGON_EGG: 500
+    HURT_TAMED_ANIMALS: 500
+    ANVIL: 200
+    TRAPPED_CHEST: 200
+    BOOKSHELF: 200
+    HARVEST: 200
+    FROST_WALKER: 200
+    COLLECT_LAVA: 200
+    LEAF_DECAY: 200
+    ENDERMAN_TELEPORT: 200
+    LEVER: 200
+    CAKE: 200
+    HURT_MONSTERS: 200
+    FIRE_SPREAD: 200
+    CHANGE_SETTINGS: 1000
+    SIGN_EDITING: 200
+    TRADING: 200
+    EGGS: 200
+    CHEST: 200
+    PLACE_WARP: 200
+    TNT_DAMAGE: 200
+    FLINT_AND_STEEL: 200
+    SCULK_SENSOR: 200
+    CROP_TRAMPLE: 200
+    DROPPER: 200
+    TNT_PRIMING: 200
+    COLLECT_WATER: 200
+    AXOLOTL_SCOOPING: 200
+    ANIMAL_NATURAL_SPAWN: 200
+    SHULKER_TELEPORT: 200
+    BUTTON: 200
+    COMPOSTER: 200
+    COMMAND_RANKS: 200
+    CRAFTER: 200
+    TRAPDOOR: 200
+    EXPERIENCE_BOTTLE_THROWING: 200
+    HIVE: 200
+    DYE: 200
+    ITEM_FRAME: 200
+    CROP_PLANTING: 200
+    CRAFTING: 200
+    ENCHANTING: 200
+    SHEARING: 200
+    ANIMAL_SPAWNERS_SPAWN: 200
+    BLOCK_EXPLODE_DAMAGE: 200
+    BOAT: 200
+    SPAWN_EGGS: 200
+    BED: 200
+    MONSTER_NATURAL_SPAWN: 200
+    SCULK_SHRIEKER: 200
+    SMITHING: 200
+    EXPERIENCE_PICKUP: 200
+    HOPPER: 200
+    CANDLES: 200
+    LEASH: 200
+    MOUNT_INVENTORY: 200
+    BREAK_BLOCKS: 200
+    JUKEBOX: 200
+    POTION_THROWING: 200
+    HURT_ANIMALS: 200
+    LOOM: 200
+    REDSTONE: 200
+    BUCKET: 200
+    ENDER_PEARL: 200
+    BELL_RINGING: 200
+    DOOR: 200
+    BREAK_HOPPERS: 200
+    FURNACE: 200
+    MONSTER_SPAWNERS_SPAWN: 200
+    MINECART: 200
+    FISH_SCOOPING: 200
+    FIRE_IGNITE: 200
+    END_PORTAL: 200
+    BREEDING: 200
+    HURT_VILLAGERS: 200
+    TURTLE_EGGS: 200
+    BREAK_SPAWNERS: 200
+    RIDING: 200
+    NAME_TAG: 200
+    ARMOR_STAND: 200
+    ITEM_DROP: 200
+    NOTE_BLOCK: 200
+    NETHER_PORTAL: 200
+    LECTERN: 200
+    GRINDSTONE: 200
+    SHULKER_BOX: 200
+    ITEM_PICKUP: 200
+    BREWING: 200
+    STONECUTTING: 200
+    FIRE_EXTINGUISH: 200
+    ALLAY: 200
+    BEACON: 200
+    PRESSURE_PLATE: 200
+    PLACE_BLOCKS: 200
+    FLOWER_POT: 200
+    MILKING: 200
+    DISPENSER: 200
+    GATE: 200
+    FIRE_BURNING: 200
+    CHORUS_FRUIT: 200
+    CONTAINER: 200
+    BARREL: 200
+    CARTOGRAPHY: 200
+    COLLECT_POWDERED_SNOW: 200
+
+  # These are the default settings for new areas
+  default-area-settings: {}
+  # These settings/flags are hidden from users
+  # Ops can toggle hiding in-game using SHIFT-LEFT-CLICK on flags in settings
+  hidden-flags: []
+  # Visitor banned commands - Visitors to areas cannot use these commands in this world
+  visitor-banned-commands: []
+  # Falling banned commands - players cannot use these commands when falling
+  # if the PREVENT_TELEPORT_WHEN_FALLING world setting flag is active
+  falling-banned-commands: []
+area:
+  # Default max team size
+  # Permission size cannot be less than the default below. 
+  max-team-size: 4
+  # Default maximum number of coop rank members per area
+  # Players can have the crowdbound.coop.maxsize.<number> permission to be bigger but
+  # permission size cannot be less than the default below. 
+  max-coop-size: 4
+  # Default maximum number of trusted rank members per area
+  # Players can have the crowdbound.trust.maxsize.<number> permission to be bigger but
+  # permission size cannot be less than the default below. 
+  max-trusted-size: 4
+  # Default maximum number of homes a player can have. Min = 1
+  # Accessed via /is sethome <number> or /is go <number>
+  max-homes: 5
+  reset:
+    # How many resets a player is allowed (manage with /boxadmin reset add/remove/reset/set command)
+    # Value of -1 means unlimited, 0 means hardcore - no resets.
+    # Example, 2 resets means they get 2 resets or 3 areas lifetime
+    reset-limit: -1
+    # Kicked or leaving players lose resets
+    # Players who leave a team will lose an area reset chance
+    # If a player has zero resets left and leaves a team, they cannot make a new
+    # area by themselves and can only join a team.
+    # Leave this true to avoid players exploiting free areas
+    leavers-lose-reset: false
+    # Allow kicked players to keep their inventory.
+    # Overrides the on-leave inventory reset for kicked players.
+    kicked-keep-inventory: false
+    on-join:
+      # What the addon should reset when the player joins or creates an area
+      # Reset Money - if this is true, will reset the player's money to the starting money
+      # Recommendation is that this is set to true, but if you run multi-worlds
+      # make sure your economy handles multi-worlds too.
+      money: false
+      # Reset inventory - if true, the player's inventory will be cleared.
+      # Note: if you have MultiInv running or a similar inventory control plugin, that
+      # plugin may still reset the inventory when the world changes.
+      inventory: false
+      # Reset health - if true, the player's health will be reset.
+      health: true
+      # Reset hunger - if true, the player's hunger will be reset.
+      hunger: true
+      # Reset experience points - if true, the player's experience will be reset.
+      exp: false
+      # Reset Ender Chest - if true, the player's Ender Chest will be cleared.
+      ender-chest: false
+      # Reset advancements.
+      reset-advancements: true
+      # Grant these advancements
+      grant-advancements: []
+    on-leave:
+      # What the plugin should reset when the player leaves or is kicked from an area
+      # Reset Money - if this is true, will reset the player's money to the starting money
+      # Recommendation is that this is set to true, but if you run multi-worlds
+      # make sure your economy handles multi-worlds too.
+      money: false
+      # Reset inventory - if true, the player's inventory will be cleared.
+      # Note: if you have MultiInv running or a similar inventory control plugin, that
+      # plugin may still reset the inventory when the world changes.
+      inventory: false
+      # Reset health - if true, the player's health will be reset.
+      health: false
+      # Reset hunger - if true, the player's hunger will be reset.
+      hunger: false
+      # Reset experience - if true, the player's experience will be reset.
+      exp: false
+      # Reset Ender Chest - if true, the player's Ender Chest will be cleared.
+      ender-chest: false
+      # Reset advancements.
+      reset-advancements: false
+      # Grant these advancements
+      grant-advancements: []
+  create-area-on-first-login:
+    # Toggles the automatic area creation upon the player's first login on your server.
+    # If set to true,
+    #    * Upon connecting to your server for the first time, the player will be told that
+    #     an area will be created for him.
+    #   * Make sure you have a Blueprint Bundle called "default": this is the one that will
+    #     be used to create the area.
+    #   * An area will be created for the player without needing him to run the create command.
+    # If set to false, this will disable this feature entirely.
+    # Warning:
+    #   * If you are running multiple gamemodes on your server, and all of them have
+    #     this feature enabled, an area in all the gamemodes will be created simultaneously.
+    #     However, it is impossible to know on which area the player will be teleported to afterwards.
+    #   * Island creation can be resource-intensive, please consider the options below to help mitigate
+    #     the potential issues, especially if you expect a lot of players to connect to your server
+    #     in a limited period of time.
+    enable: false
+    # Time in seconds after the player logged in, before his area gets created.
+    # If set to 0 or less, the area will be created directly upon the player's login.
+    # It is recommended to keep this value under a minute's time.
+    delay: 5
+    # Toggles whether the area creation should be aborted if the player logged off while the
+    # delay (see the option above) has not worn off yet.
+    # If set to true,
+    #   * If the player has logged off the server while the delay (see the option above) has not
+    #     worn off yet, this will cancel the area creation.
+    #   * If the player relogs afterward, since he will not be recognized as a new player, no area
+    #     would be created for him.
+    #   * If the area creation started before the player logged off, it will continue.
+    # If set to false, the player's area will be created even if he went offline in the meantime.
+    # Note this option has no effect if the delay (see the option above) is set to 0 or less.
+    abort-on-logout: true
+  # Toggles whether the player should be teleported automatically to his area when it is created.
+  # If set to false, the player will be told his area is ready but will have to teleport to his area using the command.
+  teleport-player-to-area-when-created: true
+  commands:
+    # List of commands to run when a player joins an area or creates one.
+    # These commands are run by the console, unless otherwise stated using the [SUDO] prefix,
+    # in which case they are executed by the player.
+    # 
+    # Available placeholders for the commands are the following:
+    #    * [name]: name of the player
+    # 
+    # Here are some examples of valid commands to execute:
+    #    * "[SUDO] bbox version"
+    #    * "boxadmin deaths set [player] 0"
+    on-join: []
+    # List of commands to run when a player leaves an area, resets his area or gets kicked from it.
+    # These commands are run by the console, unless otherwise stated using the [SUDO] prefix,
+    # in which case they are executed by the player.
+    # 
+    # Available placeholders for the commands are the following:
+    #    * [name]: name of the player
+    # 
+    # Here are some examples of valid commands to execute:
+    #    * '[SUDO] bbox version'
+    #    * 'boxadmin deaths set [player] 0'
+    # 
+    # Note that player-executed commands might not work, as these commands can be run with said player being offline.
+    on-leave: []
+    # List of commands that should be executed when the player respawns after death if Flags.ISLAND_RESPAWN is true.
+    # These commands are run by the console, unless otherwise stated using the [SUDO] prefix,
+    # in which case they are executed by the player.
+    # 
+    # Available placeholders for the commands are the following:
+    #    * [name]: name of the player
+    # 
+    # Here are some examples of valid commands to execute:
+    #    * '[SUDO] bbox version'
+    #    * 'bsbadmin deaths set [player] 0'
+    # 
+    # Note that player-executed commands might not work, as these commands can be run with said player being offline.
+    # Added since 1.14.0.
+    on-respawn: []
+  sethome:
+    nether:
+      # Allow setting home in the nether.
+      allow: true
+      require-confirmation: true
+    the-end:
+      # Allow setting home in the end.
+      allow: true
+      require-confirmation: true
+  deaths:
+    # Whether deaths are counted or not.
+    counted: true
+    # Maximum number of deaths to count. The death count can be used by add-ons.
+    max: 10
+    # When a player joins a team, reset their death count
+    team-join-reset: true
+    # Reset player death count when they start a new area or reset an area
+    reset-on-new-area: true
+protection:
+  # Geo restrict mobs.
+  # Mobs that exit the area space where they were spawned will be removed.
+  geo-limit-settings: []
+  # Blocked mobs.
+  # List of mobs that should not spawn in Boxed.
+  block-mobs: []
+  # Invincible visitors. List of damages that will not affect visitors.
+  # Make list blank if visitors should receive all damages
+  invincible-visitors: []
+do-not-edit-these-settings:
+  # These settings should not be edited
+  reset-epoch: 0
