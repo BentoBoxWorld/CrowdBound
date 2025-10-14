@@ -1,5 +1,9 @@
 package world.bentobox.crowdbound;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -14,6 +18,8 @@ import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.crowdbound.commands.player.ClaimCommand;
+import world.bentobox.crowdbound.listeners.BorderShower;
+import world.bentobox.crowdbound.listeners.PlayerListener;
 
 /**
  * Main Boxed class - provides a survival game inside a box
@@ -28,6 +34,8 @@ public class CrowdBound extends GameModeAddon {
     private Settings settings;
 
     private final Config<Settings> configObject = new Config<>(this, Settings.class);
+    private BorderShower borderShower;
+    private final Set<BorderType> availableBorderTypes = EnumSet.of(BorderType.VANILLA, BorderType.BARRIER);
 
     @Override
     public void onLoad() {
@@ -72,13 +80,14 @@ public class CrowdBound extends GameModeAddon {
     @Override
     public void onEnable() {
         // Check for recommended addons
-        if (this.getPlugin().getAddonsManager().getAddonByName("Border").isEmpty()) {
-            this.logWarning("CrowdBound normally requires the Border addon.");
+        if (this.getPlugin().getAddonsManager().getAddonByName("Border").isPresent()) {
+            this.logWarning("CrowdBound has its own Border, so do not use Border in the Crowdbound world.");
         }
         if (this.getPlugin().getAddonsManager().getAddonByName("InvSwitcher").isEmpty()) {
             this.logWarning("CrowdBound recommends the InvSwitcher addon.");
         }
-
+        borderShower = this.createBorder();
+        this.registerListener(new PlayerListener(this));
     }
 
     @Override
@@ -191,4 +200,18 @@ public class CrowdBound extends GameModeAddon {
     public boolean isUsesNewChunkGeneration() {
         return true;
     }
-}
+
+    public Set<BorderType> getAvailableBorderTypesView() {
+        return Collections.unmodifiableSet(availableBorderTypes);
+    }
+
+       private BorderShower createBorder() {
+        BorderShower customBorder = new ShowBarrier(this);
+        BorderShower wbapiBorder = new ShowVirtualWorldBorder(this);
+        return new PerPlayerBorderProxy(this, customBorder, wbapiBorder);
+    }
+
+    public BorderShower getBorderShower() {
+        return borderShower;
+    }
+    }

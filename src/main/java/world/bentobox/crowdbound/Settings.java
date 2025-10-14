@@ -1758,4 +1758,18 @@ public class Settings implements WorldSettings {
         this.allowStructures = allowStructures;
     }
 
+    public BorderType getType() {
+        return BorderType.VANILLA;
+    }
+
+    public boolean isUseBarrierBlocks() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public boolean isShowParticles() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 }
