@@ -63,6 +63,8 @@ public class PlayerListener implements Listener {
             // Run one-tick after joining because meta data cannot be set otherwise
             Bukkit.getScheduler().runTask(addon.getPlugin(), () -> processEvent(e));
         }
+        // Update the border for any online players
+        Bukkit.getOnlinePlayers().stream().filter(p -> addon.inWorld(p.getWorld())).forEach(show::showBorder);
     }
 
     protected void processEvent(PlayerJoinEvent e) {
@@ -84,6 +86,8 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent e) {
         show.clearUser(User.getInstance(e.getPlayer()));
+        // Wait for player to exit
+        Bukkit.getScheduler().runTask(addon.getPlugin(), () -> addon.getBorderSize());
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -148,6 +152,7 @@ public class PlayerListener implements Listener {
                 return;
             }
             show.hideBorder(User.getInstance(player));
+            show.showBorder(player);
         })
                 );
     }

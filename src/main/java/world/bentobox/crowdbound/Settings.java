@@ -23,11 +23,17 @@ import world.bentobox.bentobox.database.objects.adapters.FlagSerializer2;
 
 /**
  * All the plugin settings are here
- * @author Tastybento
+ * @author tastybento
  */
 @StoreAt(filename="config.yml", path="addons/CrowdBound") // Explicitly call out what name this should have.
 @ConfigComment("CrowdBound Configuration [version]")
 public class Settings implements WorldSettings {
+    
+    /* Unique CrowdBound settings */
+    @ConfigComment("Border reduction speed.")
+    @ConfigComment("Per block reduction time in seconds.")
+    @ConfigEntry(path = "crowdbound.barrier-reduction-speed")
+    private int barrierReductionSpeed = 10;
 
     /* Commands */
     @ConfigComment("Player Command. What command users will run to access their area.")
@@ -1770,6 +1776,20 @@ public class Settings implements WorldSettings {
     public boolean isShowParticles() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    /**
+     * @return the barrierReductionSpeed
+     */
+    public int getBarrierReductionSpeed() {
+        return barrierReductionSpeed;
+    }
+
+    /**
+     * @param barrierReductionSpeed the barrierReductionSpeed to set
+     */
+    public void setBarrierReductionSpeed(int barrierReductionSpeed) {
+        this.barrierReductionSpeed = barrierReductionSpeed;
     }
 
 }

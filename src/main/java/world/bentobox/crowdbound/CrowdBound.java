@@ -10,8 +10,11 @@ import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.SpawnCategory;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.scheduler.BukkitTask;
 import org.eclipse.jdt.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.addons.GameModeAddon;
 import world.bentobox.bentobox.api.commands.admin.DefaultAdminCommand;
 import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
@@ -36,7 +39,9 @@ public class CrowdBound extends GameModeAddon {
     private final Config<Settings> configObject = new Config<>(this, Settings.class);
     private BorderShower borderShower;
     private final Set<BorderType> availableBorderTypes = EnumSet.of(BorderType.VANILLA, BorderType.BARRIER);
-    
+    private int borderSize;
+    private @NotNull BukkitTask task;
+
     @Override
     public boolean isFixIslandCenter() {
         return false;
@@ -210,7 +215,7 @@ public class CrowdBound extends GameModeAddon {
         return Collections.unmodifiableSet(availableBorderTypes);
     }
 
-       private BorderShower createBorder() {
+    private BorderShower createBorder() {
         BorderShower customBorder = new ShowBarrier(this);
         BorderShower wbapiBorder = new ShowWorldBorder(this);
         return new PerPlayerBorderProxy(this, customBorder, wbapiBorder);
@@ -219,4 +224,37 @@ public class CrowdBound extends GameModeAddon {
     public BorderShower getBorderShower() {
         return borderShower;
     }
+
+    /**
+     * Get the size of the general world border, which is determined by the number of users.
+     * If the new size is less than the current size, e.g., players have left, then the border size is
+     * gradually reduced over time.
+     * @return border size
+     */
+    public double getBorderSize() {
+        int newBorderSize = this.getSettings().getIslandProtectionRange() * Bukkit.getServer().getOnlinePlayers().size();
+        BentoBox.getInstance().logDebug("Get border size = " + newBorderSize + " old = " + borderSize);
+        if (newBorderSize < borderSize) {
+            if (task != null) {
+                // End any current task to replace it
+                task.cancel();
+            }
+            // Trigger gradual reduction of border
+           task =  Bukkit.getScheduler().runTaskTimer(getPlugin(), () -> {
+               BentoBox.getInstance().logDebug("Get border size = " + newBorderSize + " old = " + borderSize);
+                if (borderSize > newBorderSize) {
+                    borderSize--;
+                    // Update the border for any online players
+                    Bukkit.getOnlinePlayers().stream().filter(p -> inWorld(p.getWorld())).forEach(borderShower::showBorder);
+                } else {
+                    // We are done
+                    BentoBox.getInstance().logDebug("canceled");
+                    task.cancel();
+                }
+            }, this.getSettings().getBarrierReductionSpeed() * 20L, this.getSettings().getBarrierReductionSpeed() * 20L);
+        } else {
+            borderSize = newBorderSize;
+        }
+        return borderSize;
     }
+}

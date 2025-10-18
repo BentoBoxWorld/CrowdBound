@@ -4,15 +4,18 @@ import java.util.Objects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldBorder;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.util.Vector;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.metadata.MetaDataValue;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.util.Util;
+import world.bentobox.bentobox.util.teleport.SafeSpotTeleport;
 import world.bentobox.crowdbound.listeners.BorderShower;
 
 /**
@@ -33,7 +36,7 @@ public class ShowWorldBorder implements BorderShower {
         if (!Objects.requireNonNull(User.getInstance(player)).getMetaData(BORDER_STATE_META_DATA).map(MetaDataValue::asBoolean).orElse(true)) {
             return;
         }
-        addon.getIslands().getIslandAt(player.getLocation()).ifPresent(island -> {
+        addon.getIslands().getIslandAt(player.getLocation()).ifPresentOrElse(island -> {
             Location l = island.getProtectionCenter();
             if (player.getWorld().getEnvironment() == Environment.NETHER) {
                 l.multiply(8);
@@ -44,7 +47,35 @@ public class ShowWorldBorder implements BorderShower {
             wb.setSize(size);
             wb.setWarningDistance(0);
             player.setWorldBorder(wb);
-        });
+        },
+                // No claim - show world border
+                () -> showWorldBarrier(player));
+    }
+    
+    private void showWorldBarrier(Player player) {
+        BentoBox.getInstance().logDebug("Show world barrier");
+        if (!addon.inWorld(player.getWorld())) {
+            // If the player is not in a world governed by this addon, skip
+            BentoBox.getInstance().logDebug("Wrong world");
+            return;
+        }
+        // Get the center of the barrier
+        Location center = addon.getIslands().getSpawnPoint(player.getWorld());
+        BentoBox.getInstance().logDebug("Spawn point = " + center);
+        if (center == null) {
+            center = player.getWorld().getSpawnLocation();
+        }
+        BentoBox.getInstance().logDebug("Actual spawn point = " + center);
+        WorldBorder wb = Bukkit.createWorldBorder();
+        wb.setCenter(center);
+        double size = addon.getBorderSize();
+        wb.setSize(size);
+        wb.setWarningDistance(5);
+        if (!wb.isInside(player.getLocation())) {
+            User.getInstance(player).sendMessage("crowdbound.teleporting-to-spawn");
+            new SafeSpotTeleport.Builder(addon.getPlugin()).entity(player).location(center).build();
+        }
+        player.setWorldBorder(wb);
     }
 
     @Override
