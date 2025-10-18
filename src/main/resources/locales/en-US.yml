@@ -1,9 +1,23 @@
 #
 # This is a YML file. Be careful when editing. Check your edits in a YAML checker like    #
 # the one at http://yaml-online-parser.appspot.com                                        #
+---
 crowdbound:
-    prefixes:
-      island: claim
-      Island: Claim
-      an-island: a claim
-      islands: claims
+  prefixes:
+    island: claim
+    Island: Claim
+    an-island: a claim
+    islands: claims
+  teleporting-to-spawn: "&c You were outside the border. Teleported to spawn.."
+  errors:
+    not-in-world: "&c You must be in the world to claim"
+    already-claimed: "&c This location is already claimed!"
+    overlap: "&c You cannot make a claim here because it would overlap another claim
+      at [xyz]."
+    too-close-to-spawn: "&c You are too close to spawn to make a claim. Move further out."
+    no-fit-inside: "&c This claim cannot completely fit inside the boundary."
+  commands:
+    island:
+      create:
+        creating-island: "&a Trying to claim..."
+        cannot-create-island: "&c Claim could not be made."

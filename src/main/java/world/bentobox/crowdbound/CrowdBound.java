@@ -46,6 +46,11 @@ public class CrowdBound extends GameModeAddon {
     public boolean isFixIslandCenter() {
         return false;
     }
+    
+    @Override
+    public boolean isEnforceEqualRanges() {
+        return false;
+    }
 
     @Override
     public void onLoad() {
@@ -232,9 +237,8 @@ public class CrowdBound extends GameModeAddon {
      * @return border size
      */
     public double getBorderSize() {
-        int newBorderSize = this.getSettings().getIslandProtectionRange() * Bukkit.getServer().getOnlinePlayers().size();
-        BentoBox.getInstance().logDebug("Get border size = " + newBorderSize + " old = " + borderSize);
-        if (newBorderSize < borderSize) {
+        int newBorderSize = Math.max(getSettings().getBarrierIncreaseBlocks(), (this.getSettings().getBarrierIncreaseBlocks() * Bukkit.getServer().getOnlinePlayers().size()));
+         if (newBorderSize < borderSize) {
             if (task != null) {
                 // End any current task to replace it
                 task.cancel();

@@ -4,11 +4,11 @@ import java.util.Objects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Sound;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldBorder;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
 import world.bentobox.bentobox.BentoBox;
@@ -37,10 +37,20 @@ public class ShowWorldBorder implements BorderShower {
             return;
         }
         addon.getIslands().getIslandAt(player.getLocation()).ifPresentOrElse(island -> {
+            
             Location l = island.getProtectionCenter();
             if (player.getWorld().getEnvironment() == Environment.NETHER) {
                 l.multiply(8);
             }
+            // Check if the island is entirely within the world barrier
+            Location center = Objects.requireNonNullElse(addon.getIslands().getSpawnPoint(player.getWorld()), player.getWorld().getSpawnLocation());
+            double dist = addon.getBorderSize();
+           BoundingBox worldBB = BoundingBox.of(center.toVector(), dist, dist, dist);
+           if (worldBB.contains(island.getBoundingBox())) {
+               showWorldBarrier(player);
+               return;
+           }
+           // Island is isolated so show the world barrier 
             WorldBorder wb = Bukkit.createWorldBorder();
             wb.setCenter(l);
             double size = Math.min(island.getRange() * 2D, (island.getProtectionRange()) * 2D);
@@ -60,12 +70,8 @@ public class ShowWorldBorder implements BorderShower {
             return;
         }
         // Get the center of the barrier
-        Location center = addon.getIslands().getSpawnPoint(player.getWorld());
+        Location center = Objects.requireNonNullElse(addon.getIslands().getSpawnPoint(player.getWorld()), player.getWorld().getSpawnLocation());
         BentoBox.getInstance().logDebug("Spawn point = " + center);
-        if (center == null) {
-            center = player.getWorld().getSpawnLocation();
-        }
-        BentoBox.getInstance().logDebug("Actual spawn point = " + center);
         WorldBorder wb = Bukkit.createWorldBorder();
         wb.setCenter(center);
         double size = addon.getBorderSize();

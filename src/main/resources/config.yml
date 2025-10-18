@@ -1,7 +1,7 @@
 # CrowdBound Configuration ${version}
 crowdbound:
   command:
-    # Player Command. What command users will run to access their area.
+    # Player Command. What command users will run to access their claim.
     # To define alias, just separate commands with white space.
     player: cb crowdbound
     # The admin command.
@@ -28,6 +28,13 @@ world:
   # World difficulty setting - PEACEFUL, EASY, NORMAL, HARD
   # Other plugins may override this setting
   difficulty: NORMAL
+  # Minimum claim distance from spawn in blocks.
+  minimum distance: 32
+  # Global border size increase per online player in blocks.
+  barrier-increase-blocks: 320
+  # Global border reduction speed. How fast the global border will shrink if it needs to do so.
+  # Per block reduction time in seconds.
+  barrier-reduction-speed: 10
   # Allow structures to generate in the seed world
   allow-structures: true
   spawn-limits:
@@ -43,14 +50,6 @@ world:
     # Setting to 0 will disable monster spawns, but this is not recommended. Minecraft default is 400.
     # A negative value uses the server default
     ticks-per-monster-spawns: -1
-  # Radius of player area. (So distance between player starting spots is twice this)
-  # MUST BE A FACTOR OF 16. If not, it will be rounded to be one.
-  # It is the same for every dimension : Overworld, Nether and End.
-  # /!\ BentoBox currently does not support changing this value mid-game. If you do need to change it, do a full reset of your databases and worlds.
-  area-radius: 64
-  # Starting size of crowdbound spaces. This is a radius so 1 = a 2x2 area.
-  # Admins can adjust via the /boxadmin range set <player> <new range> command
-  starting-protection-range: 32
   # Start to place players at these coordinates. This is where players will start in the
   # world. This must be a multiple of your area radius, but the plugin will auto
   # calculate the closest location on the grid. Players are placed around this location
@@ -64,7 +63,7 @@ world:
   # The number of concurrent areas a player can have
   # A value of 0 will use the BentoBox config.yml default
   concurrent-area: 5
-  # Disallow team members from having their own area.
+  # Disallow team members from having their own claim.
   disallow-team-member-areas: false
   # Area height
   # It is the y coordinate of the bedrock block in the blueprint.
@@ -94,7 +93,7 @@ world:
   # World flags. These are boolean settings for various flags for this world
   flags:
     DRAGON_EGG: false
-    ISLAND_RESPAWN: true
+    ISLAND_RESPAWN: false
     CREEPER_GRIEFING: false
     PETS_STAY_AT_HOME: true
     NATURAL_SPAWNING_OUTSIDE_RANGE: true
@@ -230,19 +229,18 @@ world:
     BOOKSHELF: 200
     HARVEST: 200
     FROST_WALKER: 200
-    COLLECT_LAVA: 200
     LEAF_DECAY: 200
+    COLLECT_LAVA: 200
     ENDERMAN_TELEPORT: 200
     LEVER: 200
-    CAKE: 200
     HURT_MONSTERS: 200
+    CAKE: 200
     FIRE_SPREAD: 200
     CHANGE_SETTINGS: 1000
     SIGN_EDITING: 200
     TRADING: 200
     EGGS: 200
     CHEST: 200
-    PLACE_WARP: 200
     TNT_DAMAGE: 200
     FLINT_AND_STEEL: 200
     SCULK_SENSOR: 200
@@ -264,10 +262,10 @@ world:
     ITEM_FRAME: 200
     CROP_PLANTING: 200
     CRAFTING: 200
-    ENCHANTING: 200
     SHEARING: 200
-    ANIMAL_SPAWNERS_SPAWN: 200
+    ENCHANTING: 200
     BLOCK_EXPLODE_DAMAGE: 200
+    ANIMAL_SPAWNERS_SPAWN: 200
     BOAT: 200
     SPAWN_EGGS: 200
     BED: 200
@@ -278,10 +276,10 @@ world:
     HOPPER: 200
     CANDLES: 200
     LEASH: 200
-    MOUNT_INVENTORY: 200
     BREAK_BLOCKS: 200
-    JUKEBOX: 200
+    MOUNT_INVENTORY: 200
     POTION_THROWING: 200
+    JUKEBOX: 200
     HURT_ANIMALS: 200
     LOOM: 200
     REDSTONE: 200
@@ -293,8 +291,8 @@ world:
     FURNACE: 200
     MONSTER_SPAWNERS_SPAWN: 200
     MINECART: 200
-    FISH_SCOOPING: 200
     FIRE_IGNITE: 200
+    FISH_SCOOPING: 200
     END_PORTAL: 200
     BREEDING: 200
     HURT_VILLAGERS: 200
@@ -307,14 +305,14 @@ world:
     NOTE_BLOCK: 200
     NETHER_PORTAL: 200
     LECTERN: 200
-    GRINDSTONE: 200
     SHULKER_BOX: 200
+    GRINDSTONE: 200
     ITEM_PICKUP: 200
     BREWING: 200
     STONECUTTING: 200
     FIRE_EXTINGUISH: 200
-    ALLAY: 200
     BEACON: 200
+    ALLAY: 200
     PRESSURE_PLATE: 200
     PLACE_BLOCKS: 200
     FLOWER_POT: 200
@@ -327,7 +325,6 @@ world:
     BARREL: 200
     CARTOGRAPHY: 200
     COLLECT_POWDERED_SNOW: 200
-
   # These are the default settings for new areas
   default-area-settings: {}
   # These settings/flags are hidden from users
@@ -338,10 +335,15 @@ world:
   # Falling banned commands - players cannot use these commands when falling
   # if the PREVENT_TELEPORT_WHEN_FALLING world setting flag is active
   falling-banned-commands: []
-area:
+claim:
+  # Max radius of a single player claim. This is the largest it can grow to.
+  # It is the same for every dimension : Overworld, Nether and End.
+  max-size: 32
   # Default max team size
   # Permission size cannot be less than the default below. 
   max-team-size: 4
+  # Claim size bonus in bocks for each team member
+  member-bonus: 40
   # Default maximum number of coop rank members per area
   # Players can have the crowdbound.coop.maxsize.<number> permission to be bigger but
   # permission size cannot be less than the default below. 
@@ -417,7 +419,7 @@ area:
     #    * Upon connecting to your server for the first time, the player will be told that
     #     an area will be created for him.
     #   * Make sure you have a Blueprint Bundle called "default": this is the one that will
-    #     be used to create the area.
+    #     be used to create the claim.
     #   * An area will be created for the player without needing him to run the create command.
     # If set to false, this will disable this feature entirely.
     # Warning:

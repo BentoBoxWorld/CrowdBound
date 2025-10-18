@@ -29,14 +29,8 @@ import world.bentobox.bentobox.database.objects.adapters.FlagSerializer2;
 @ConfigComment("CrowdBound Configuration [version]")
 public class Settings implements WorldSettings {
     
-    /* Unique CrowdBound settings */
-    @ConfigComment("Border reduction speed.")
-    @ConfigComment("Per block reduction time in seconds.")
-    @ConfigEntry(path = "crowdbound.barrier-reduction-speed")
-    private int barrierReductionSpeed = 10;
-
     /* Commands */
-    @ConfigComment("Player Command. What command users will run to access their area.")
+    @ConfigComment("Player Command. What command users will run to access their claim.")
     @ConfigComment("To define alias, just separate commands with white space.")
     @ConfigEntry(path = "crowdbound.command.player")
     private String playerCommandAliases = "cb crowdbound";
@@ -77,6 +71,20 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.difficulty")
     private Difficulty difficulty = Difficulty.NORMAL;
     
+    /* Unique CrowdBound settings */
+    @ConfigComment("Minimum claim distance from spawn in blocks.")
+    @ConfigEntry(path = "world.minimum distance")
+    private int minimumClaimDistance = 320;
+    
+    @ConfigComment("Global border size increase per online player in blocks.")
+    @ConfigEntry(path = "world.barrier-increase-blocks")
+    private int barrierIncreaseBlocks = 160;
+    
+    @ConfigComment("Global border reduction speed. How fast the global border will shrink if it needs to do so.")
+    @ConfigComment("Per block reduction time in seconds.")
+    @ConfigEntry(path = "world.barrier-reduction-speed")
+    private int barrierReductionSpeed = 10;
+    
     @ConfigComment("Allow structures to generate in the seed world")
     @ConfigEntry(path = "world.allow-structures")
     private boolean allowStructures = true;
@@ -100,17 +108,6 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.spawn-limits.ticks-per-monster-spawns")
     private int ticksPerMonsterSpawns = -1;
 
-    @ConfigComment("Radius of player area. (So distance between player starting spots is twice this)")
-    @ConfigComment("MUST BE A FACTOR OF 16. If not, it will be rounded to be one.")
-    @ConfigComment("It is the same for every dimension : Overworld, Nether and End.")
-    @ConfigEntry(path = "world.area-radius", needsReset = true)
-    private int islandDistance = 320;
-
-    @ConfigComment("Starting size of crowdbound spaces. This is a radius so 1 = a 2x2 area.")
-    @ConfigComment("Admins can adjust via the /boxadmin range set <player> <new range> command")
-    @ConfigEntry(path = "world.starting-protection-range")
-    private int islandProtectionRange = 80;
-
     @ConfigComment("Start to place players at these coordinates. This is where players will start in the")
     @ConfigComment("world. This must be a multiple of your area radius, but the plugin will auto")
     @ConfigComment("calculate the closest location on the grid. Players are placed around this location")
@@ -132,7 +129,7 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.concurrent-area")
     private int concurrentIslands = 0;
 
-    @ConfigComment("Disallow team members from having their own area.")
+    @ConfigComment("Disallow team members from having their own claim.")
     @ConfigEntry(path = "world.disallow-team-member-areas")
     private boolean disallowTeamMemberIslands = true;
 
@@ -210,34 +207,43 @@ public class Settings implements WorldSettings {
 
     // ---------------------------------------------
 
-    /*      ISLAND      */
+    /*      CLAIM      */
+    @ConfigComment("Max radius of a single player claim. This is the largest it can grow to.")
+    @ConfigComment("It is the same for every dimension : Overworld, Nether and End.")
+    @ConfigEntry(path = "claim.max-size")
+    private int islandDistance = 96;
+
     @ConfigComment("Default max team size")
     @ConfigComment("Permission size cannot be less than the default below. ")
-    @ConfigEntry(path = "area.max-team-size")
+    @ConfigEntry(path = "claim.max-team-size")
     private int maxTeamSize = 4;
+    
+    @ConfigComment("Claim size bonus in bocks for each team member")
+    @ConfigEntry(path = "claim.member-bonus")
+    private int memberBonus = 40;
 
     @ConfigComment("Default maximum number of coop rank members per area")
     @ConfigComment("Players can have the crowdbound.coop.maxsize.<number> permission to be bigger but")
     @ConfigComment("permission size cannot be less than the default below. ")
-    @ConfigEntry(path = "area.max-coop-size")
+    @ConfigEntry(path = "claim.max-coop-size")
     private int maxCoopSize = 4;
 
     @ConfigComment("Default maximum number of trusted rank members per area")
     @ConfigComment("Players can have the crowdbound.trust.maxsize.<number> permission to be bigger but")
     @ConfigComment("permission size cannot be less than the default below. ")
-    @ConfigEntry(path = "area.max-trusted-size")
+    @ConfigEntry(path = "claim.max-trusted-size")
     private int maxTrustSize = 4;
 
     @ConfigComment("Default maximum number of homes a player can have. Min = 1")
     @ConfigComment("Accessed via /is sethome <number> or /is go <number>")
-    @ConfigEntry(path = "area.max-homes")
+    @ConfigEntry(path = "claim.max-homes")
     private int maxHomes = 5;
 
     // Reset
     @ConfigComment("How many resets a player is allowed (manage with /boxadmin reset add/remove/reset/set command)")
     @ConfigComment("Value of -1 means unlimited, 0 means hardcore - no resets.")
     @ConfigComment("Example, 2 resets means they get 2 resets or 3 areas lifetime")
-    @ConfigEntry(path = "area.reset.reset-limit")
+    @ConfigEntry(path = "claim.reset.reset-limit")
     private int resetLimit = -1;
 
     @ConfigComment("Kicked or leaving players lose resets")
@@ -245,87 +251,87 @@ public class Settings implements WorldSettings {
     @ConfigComment("If a player has zero resets left and leaves a team, they cannot make a new")
     @ConfigComment("area by themselves and can only join a team.")
     @ConfigComment("Leave this true to avoid players exploiting free areas")
-    @ConfigEntry(path = "area.reset.leavers-lose-reset")
+    @ConfigEntry(path = "claim.reset.leavers-lose-reset")
     private boolean leaversLoseReset = false;
 
     @ConfigComment("Allow kicked players to keep their inventory.")
     @ConfigComment("Overrides the on-leave inventory reset for kicked players.")
-    @ConfigEntry(path = "area.reset.kicked-keep-inventory")
+    @ConfigEntry(path = "claim.reset.kicked-keep-inventory")
     private boolean kickedKeepInventory = false;
 
     @ConfigComment("What the addon should reset when the player joins or creates an area")
     @ConfigComment("Reset Money - if this is true, will reset the player's money to the starting money")
     @ConfigComment("Recommendation is that this is set to true, but if you run multi-worlds")
     @ConfigComment("make sure your economy handles multi-worlds too.")
-    @ConfigEntry(path = "area.reset.on-join.money")
+    @ConfigEntry(path = "claim.reset.on-join.money")
     private boolean onJoinResetMoney = false;
 
     @ConfigComment("Reset inventory - if true, the player's inventory will be cleared.")
     @ConfigComment("Note: if you have MultiInv running or a similar inventory control plugin, that")
     @ConfigComment("plugin may still reset the inventory when the world changes.")
-    @ConfigEntry(path = "area.reset.on-join.inventory")
+    @ConfigEntry(path = "claim.reset.on-join.inventory")
     private boolean onJoinResetInventory = false;
 
     @ConfigComment("Reset health - if true, the player's health will be reset.")
-    @ConfigEntry(path = "area.reset.on-join.health")
+    @ConfigEntry(path = "claim.reset.on-join.health")
     private boolean onJoinResetHealth = true;
 
     @ConfigComment("Reset hunger - if true, the player's hunger will be reset.")
-    @ConfigEntry(path = "area.reset.on-join.hunger")
+    @ConfigEntry(path = "claim.reset.on-join.hunger")
     private boolean onJoinResetHunger = true;
 
     @ConfigComment("Reset experience points - if true, the player's experience will be reset.")
-    @ConfigEntry(path = "area.reset.on-join.exp")
+    @ConfigEntry(path = "claim.reset.on-join.exp")
     private boolean onJoinResetXP = false;
 
 
     @ConfigComment("Reset Ender Chest - if true, the player's Ender Chest will be cleared.")
-    @ConfigEntry(path = "area.reset.on-join.ender-chest")
+    @ConfigEntry(path = "claim.reset.on-join.ender-chest")
     private boolean onJoinResetEnderChest = false;
 
     @ConfigComment("Reset advancements.")
-    @ConfigEntry(path = "area.reset.on-join.reset-advancements")
+    @ConfigEntry(path = "claim.reset.on-join.reset-advancements")
     private boolean onJoinResetAdvancements = true;
 
     @ConfigComment("Grant these advancements")
-    @ConfigEntry(path = "area.reset.on-join.grant-advancements")
+    @ConfigEntry(path = "claim.reset.on-join.grant-advancements")
     private List<String> onJoinGrantAdvancements = new ArrayList<>();
 
     @ConfigComment("What the plugin should reset when the player leaves or is kicked from an area")
     @ConfigComment("Reset Money - if this is true, will reset the player's money to the starting money")
     @ConfigComment("Recommendation is that this is set to true, but if you run multi-worlds")
     @ConfigComment("make sure your economy handles multi-worlds too.")
-    @ConfigEntry(path = "area.reset.on-leave.money")
+    @ConfigEntry(path = "claim.reset.on-leave.money")
     private boolean onLeaveResetMoney = false;
 
     @ConfigComment("Reset inventory - if true, the player's inventory will be cleared.")
     @ConfigComment("Note: if you have MultiInv running or a similar inventory control plugin, that")
     @ConfigComment("plugin may still reset the inventory when the world changes.")
-    @ConfigEntry(path = "area.reset.on-leave.inventory")
+    @ConfigEntry(path = "claim.reset.on-leave.inventory")
     private boolean onLeaveResetInventory = false;
 
     @ConfigComment("Reset health - if true, the player's health will be reset.")
-    @ConfigEntry(path = "area.reset.on-leave.health")
+    @ConfigEntry(path = "claim.reset.on-leave.health")
     private boolean onLeaveResetHealth = false;
 
     @ConfigComment("Reset hunger - if true, the player's hunger will be reset.")
-    @ConfigEntry(path = "area.reset.on-leave.hunger")
+    @ConfigEntry(path = "claim.reset.on-leave.hunger")
     private boolean onLeaveResetHunger = false;
 
     @ConfigComment("Reset experience - if true, the player's experience will be reset.")
-    @ConfigEntry(path = "area.reset.on-leave.exp")
+    @ConfigEntry(path = "claim.reset.on-leave.exp")
     private boolean onLeaveResetXP = false;
 
     @ConfigComment("Reset Ender Chest - if true, the player's Ender Chest will be cleared.")
-    @ConfigEntry(path = "area.reset.on-leave.ender-chest")
+    @ConfigEntry(path = "claim.reset.on-leave.ender-chest")
     private boolean onLeaveResetEnderChest = false;
 
     @ConfigComment("Reset advancements.")
-    @ConfigEntry(path = "area.reset.on-leave.reset-advancements")
+    @ConfigEntry(path = "claim.reset.on-leave.reset-advancements")
     private boolean onLeaveResetAdvancements = false;
 
     @ConfigComment("Grant these advancements")
-    @ConfigEntry(path = "area.reset.on-leave.grant-advancements")
+    @ConfigEntry(path = "claim.reset.on-leave.grant-advancements")
     private List<String> onLeaveGrantAdvancements = new ArrayList<>();
 
     @ConfigComment("Toggles the automatic area creation upon the player's first login on your server.")
@@ -333,7 +339,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("   * Upon connecting to your server for the first time, the player will be told that")
     @ConfigComment("    an area will be created for him.")
     @ConfigComment("  * Make sure you have a Blueprint Bundle called \"default\": this is the one that will")
-    @ConfigComment("    be used to create the area.")
+    @ConfigComment("    be used to create the claim.")
     @ConfigComment("  * An area will be created for the player without needing him to run the create command.")
     @ConfigComment("If set to false, this will disable this feature entirely.")
     @ConfigComment("Warning:")
@@ -343,13 +349,13 @@ public class Settings implements WorldSettings {
     @ConfigComment("  * Island creation can be resource-intensive, please consider the options below to help mitigate")
     @ConfigComment("    the potential issues, especially if you expect a lot of players to connect to your server")
     @ConfigComment("    in a limited period of time.")
-    @ConfigEntry(path = "area.create-area-on-first-login.enable")
+    @ConfigEntry(path = "claim.create-area-on-first-login.enable")
     private boolean createIslandOnFirstLoginEnabled;
 
     @ConfigComment("Time in seconds after the player logged in, before his area gets created.")
     @ConfigComment("If set to 0 or less, the area will be created directly upon the player's login.")
     @ConfigComment("It is recommended to keep this value under a minute's time.")
-    @ConfigEntry(path = "area.create-area-on-first-login.delay")
+    @ConfigEntry(path = "claim.create-area-on-first-login.delay")
     private int createIslandOnFirstLoginDelay = 5;
 
     @ConfigComment("Toggles whether the area creation should be aborted if the player logged off while the")
@@ -362,12 +368,12 @@ public class Settings implements WorldSettings {
     @ConfigComment("  * If the area creation started before the player logged off, it will continue.")
     @ConfigComment("If set to false, the player's area will be created even if he went offline in the meantime.")
     @ConfigComment("Note this option has no effect if the delay (see the option above) is set to 0 or less.")
-    @ConfigEntry(path = "area.create-area-on-first-login.abort-on-logout")
+    @ConfigEntry(path = "claim.create-area-on-first-login.abort-on-logout")
     private boolean createIslandOnFirstLoginAbortOnLogout = true;
 
     @ConfigComment("Toggles whether the player should be teleported automatically to his area when it is created.")
     @ConfigComment("If set to false, the player will be told his area is ready but will have to teleport to his area using the command.")
-    @ConfigEntry(path = "area.teleport-player-to-area-when-created")
+    @ConfigEntry(path = "claim.teleport-player-to-area-when-created")
     private boolean teleportPlayerToIslandUponIslandCreation = true;
 
     // Commands
@@ -381,7 +387,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("Here are some examples of valid commands to execute:")
     @ConfigComment("   * \"[SUDO] bbox version\"")
     @ConfigComment("   * \"boxadmin deaths set [player] 0\"")
-    @ConfigEntry(path = "area.commands.on-join")
+    @ConfigEntry(path = "claim.commands.on-join")
     private List<String> onJoinCommands = new ArrayList<>();
 
     @ConfigComment("List of commands to run when a player leaves an area, resets his area or gets kicked from it.")
@@ -396,7 +402,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("   * 'boxadmin deaths set [player] 0'")
     @ConfigComment("")
     @ConfigComment("Note that player-executed commands might not work, as these commands can be run with said player being offline.")
-    @ConfigEntry(path = "area.commands.on-leave")
+    @ConfigEntry(path = "claim.commands.on-leave")
     private List<String> onLeaveCommands = new ArrayList<>();
 
     @ConfigComment("List of commands that should be executed when the player respawns after death if Flags.ISLAND_RESPAWN is true.")
@@ -411,39 +417,39 @@ public class Settings implements WorldSettings {
     @ConfigComment("   * 'bsbadmin deaths set [player] 0'")
     @ConfigComment("")
     @ConfigComment("Note that player-executed commands might not work, as these commands can be run with said player being offline.")
-    @ConfigEntry(path = "area.commands.on-respawn", since = "1.14.0")
+    @ConfigEntry(path = "claim.commands.on-respawn", since = "1.14.0")
     private List<String> onRespawnCommands = new ArrayList<>();
 
     // Sethome
     @ConfigComment("Allow setting home in the nether.")
-    @ConfigEntry(path = "area.sethome.nether.allow")
+    @ConfigEntry(path = "claim.sethome.nether.allow")
     private boolean allowSetHomeInNether = true;
 
-    @ConfigEntry(path = "area.sethome.nether.require-confirmation")
+    @ConfigEntry(path = "claim.sethome.nether.require-confirmation")
     private boolean requireConfirmationToSetHomeInNether = true;
 
     @ConfigComment("Allow setting home in the end.")
-    @ConfigEntry(path = "area.sethome.the-end.allow")
+    @ConfigEntry(path = "claim.sethome.the-end.allow")
     private boolean allowSetHomeInTheEnd = true;
 
-    @ConfigEntry(path = "area.sethome.the-end.require-confirmation")
+    @ConfigEntry(path = "claim.sethome.the-end.require-confirmation")
     private boolean requireConfirmationToSetHomeInTheEnd = true;
 
     // Deaths
     @ConfigComment("Whether deaths are counted or not.")
-    @ConfigEntry(path = "area.deaths.counted")
+    @ConfigEntry(path = "claim.deaths.counted")
     private boolean deathsCounted = true;
 
     @ConfigComment("Maximum number of deaths to count. The death count can be used by add-ons.")
-    @ConfigEntry(path = "area.deaths.max")
+    @ConfigEntry(path = "claim.deaths.max")
     private int deathsMax = 10;
 
     @ConfigComment("When a player joins a team, reset their death count")
-    @ConfigEntry(path = "area.deaths.team-join-reset")
+    @ConfigEntry(path = "claim.deaths.team-join-reset")
     private boolean teamJoinDeathReset = true;
 
     @ConfigComment("Reset player death count when they start a new area or reset an area")
-    @ConfigEntry(path = "area.deaths.reset-on-new-area")
+    @ConfigEntry(path = "claim.deaths.reset-on-new-area")
     private boolean deathsResetOnNewIsland = true;
 
     // ---------------------------------------------
@@ -499,11 +505,6 @@ public class Settings implements WorldSettings {
      */
     @Override
     public int getIslandDistance() {
-        if (islandDistance % 16 != 0) {
-            islandDistance = islandDistance - (islandDistance % 16);
-            BentoBox.getInstance()
-                    .logWarning("Boxed: Area radius is not a factor of 16. Rounding to " + islandDistance);
-        }
         return islandDistance;
     }
 
@@ -512,7 +513,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public int getIslandProtectionRange() {
-        return islandProtectionRange;
+        return islandDistance;
     }
 
     /**
@@ -929,7 +930,8 @@ public class Settings implements WorldSettings {
      * @param islandProtectionRange the islandProtectionRange to set
      */
     public void setIslandProtectionRange(int islandProtectionRange) {
-        this.islandProtectionRange = islandProtectionRange;
+        // This is one and the same as islandDistance
+        this.islandDistance = islandProtectionRange;
     }
 
     /**
@@ -1769,13 +1771,11 @@ public class Settings implements WorldSettings {
     }
 
     public boolean isUseBarrierBlocks() {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public boolean isShowParticles() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     /**
@@ -1790,6 +1790,48 @@ public class Settings implements WorldSettings {
      */
     public void setBarrierReductionSpeed(int barrierReductionSpeed) {
         this.barrierReductionSpeed = barrierReductionSpeed;
+    }
+
+    /**
+     * @return the barrierIncreaseBlocks
+     */
+    public int getBarrierIncreaseBlocks() {
+        return barrierIncreaseBlocks;
+    }
+
+    /**
+     * @param barrierIncreaseBlocks the barrierIncreaseBlocks to set
+     */
+    public void setBarrierIncreaseBlocks(int barrierIncreaseBlocks) {
+        this.barrierIncreaseBlocks = barrierIncreaseBlocks;
+    }
+
+    /**
+     * @return the minimumClaimDistance
+     */
+    public int getMinimumClaimDistance() {
+        return minimumClaimDistance;
+    }
+
+    /**
+     * @param minimumClaimDistance the minimumClaimDistance to set
+     */
+    public void setMinimumClaimDistance(int minimumClaimDistance) {
+        this.minimumClaimDistance = minimumClaimDistance;
+    }
+
+    /**
+     * @return the memberBonus
+     */
+    public int getMemberBonus() {
+        return memberBonus;
+    }
+
+    /**
+     * @param memberBonus the memberBonus to set
+     */
+    public void setMemberBonus(int memberBonus) {
+        this.memberBonus = memberBonus;
     }
 
 }

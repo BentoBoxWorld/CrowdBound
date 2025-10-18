@@ -50,7 +50,7 @@ public class ClaimCommand extends CompositeCommand {
      */
     public ClaimCommand(CompositeCommand islandCommand) {
         super(islandCommand, "claim");
-        strategy = new ClaimLocationStrategy();
+        strategy = new ClaimLocationStrategy(getAddon());
     }
 
     @Override
@@ -206,7 +206,6 @@ public class ClaimCommand extends CompositeCommand {
         try {
             NewIsland.builder().player(user).addon(getAddon()).reason(Reason.CREATE).name(name).locationStrategy(strategy).noPaste().build();
         } catch (IOException e) {
-            getPlugin().logError("Could not create claim for player. " + e.getMessage());
             user.sendMessage(e.getMessage());
             return false;
         }

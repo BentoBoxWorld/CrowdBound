@@ -1,6 +1,7 @@
 package world.bentobox.crowdbound.commands.player;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.bukkit.Location;
@@ -10,21 +11,34 @@ import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.managers.island.NewIslandLocationStrategy;
 import world.bentobox.bentobox.util.Util;
+import world.bentobox.crowdbound.CrowdBound;
 
 public class ClaimLocationStrategy implements NewIslandLocationStrategy {
 
     protected final BentoBox plugin = BentoBox.getInstance();
+    private CrowdBound addon;
     
+    public ClaimLocationStrategy(CrowdBound addon) {
+        this.addon = addon;
+    }
+
     @Override
     public Location getNextLocation(World world, User user) {
         if (!Util.getWorld(user.getWorld()).equals(world)) {
-            user.sendRawMessage("You must be in the world to claim");
+            user.sendMessage("crowdbound.errors.not-in-world");
             return null;
         }
         Location location = user.getLocation();
+        int distance = addon.getSettings().getMinimumClaimDistance();
+        // Check for distance from spawn
+        Location spawn = Objects.requireNonNullElse(plugin.getIslands().getSpawnPoint(world), world.getSpawnLocation());
+        if (Math.abs(location.getX() - spawn.getX()) < distance || Math.abs(location.getZ() - spawn.getZ()) < distance) {
+            user.sendMessage("crowdbound.errors.too-close-to-spawn");
+            return null;
+        }
         // Quick check using the island grid cache.
         if (plugin.getIslands().isIslandAt(location)) {
-            user.sendRawMessage("This location is already claimed!");
+            user.sendMessage("crowdbound.errors.already-claimed");
             return null;
         }
 
@@ -39,11 +53,16 @@ public class ClaimLocationStrategy implements NewIslandLocationStrategy {
         locs.add(new Location(world, location.getX() + dist - 1, 0, location.getZ() - dist));
         locs.add(new Location(world, location.getX() + dist - 1, 0, location.getZ() + dist - 1));
 
-        boolean generated = false;
-        for (Location l : locs) {
+         for (Location l : locs) {
             // Check if an island exists
             if (plugin.getIslands().getIslandAt(l).isPresent()) {
-                user.sendRawMessage("This would overlap another claim at " + Util.xyz(l.toVector()));
+                user.sendMessage("crowdbound.errors.overlap", "[xyz]", Util.xyz(l.toVector()));
+                return null;
+            }
+            // Check that everything is within the global world border
+            if (!user.getPlayer().getWorldBorder().isInside(l)) {
+                user.sendMessage("crowdbound.errors.no-fit-inside");
+                BentoBox.getInstance().logDebug(l + " would be outside the world border");
                 return null;
             }
         }
