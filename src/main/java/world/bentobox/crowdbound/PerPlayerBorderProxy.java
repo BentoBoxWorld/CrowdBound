@@ -2,13 +2,10 @@ package world.bentobox.crowdbound;
 
 import java.util.Optional;
 
-import javax.swing.border.Border;
-
 import org.bukkit.entity.Player;
 
 import world.bentobox.bentobox.api.metadata.MetaDataValue;
 import world.bentobox.bentobox.api.user.User;
-import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.crowdbound.listeners.BorderShower;
 
 public final class PerPlayerBorderProxy implements BorderShower {
@@ -26,10 +23,10 @@ public final class PerPlayerBorderProxy implements BorderShower {
     }
 
     @Override
-    public void showBorder(Player player, Island island) {
+    public void showBorder(Player player) {
         var user = User.getInstance(player);
         var border = getBorder(user);
-        border.showBorder(player, island);
+        border.showBorder(player);
     }
 
     @Override
@@ -45,9 +42,9 @@ public final class PerPlayerBorderProxy implements BorderShower {
     }
 
     @Override
-    public void refreshView(User user, Island island) {
+    public void refreshView(User user) {
         var border = getBorder(user);
-        border.refreshView(user, island);
+        border.refreshView(user);
     }
 
     private BorderShower getBorder(User user) {

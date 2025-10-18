@@ -36,6 +36,11 @@ public class CrowdBound extends GameModeAddon {
     private final Config<Settings> configObject = new Config<>(this, Settings.class);
     private BorderShower borderShower;
     private final Set<BorderType> availableBorderTypes = EnumSet.of(BorderType.VANILLA, BorderType.BARRIER);
+    
+    @Override
+    public boolean isFixIslandCenter() {
+        return false;
+    }
 
     @Override
     public void onLoad() {
@@ -207,7 +212,7 @@ public class CrowdBound extends GameModeAddon {
 
        private BorderShower createBorder() {
         BorderShower customBorder = new ShowBarrier(this);
-        BorderShower wbapiBorder = new ShowVirtualWorldBorder(this);
+        BorderShower wbapiBorder = new ShowWorldBorder(this);
         return new PerPlayerBorderProxy(this, customBorder, wbapiBorder);
     }
 

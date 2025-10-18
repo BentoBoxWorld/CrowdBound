@@ -3,7 +3,6 @@ package world.bentobox.crowdbound.listeners;
 import org.bukkit.entity.Player;
 
 import world.bentobox.bentobox.api.user.User;
-import world.bentobox.bentobox.database.objects.Island;
 
 /**
  * A border shower class
@@ -14,11 +13,10 @@ public interface BorderShower {
     public static final String BORDER_STATE_META_DATA = "Border_state";
 
     /**
-     * Show the barrier to the player on an island
+     * Show the barrier to the player
      * @param player - player to show
-     * @param island - island
      */
-    public void showBorder(Player player, Island island);
+    public void showBorder(Player player);
 
     /**
      * Hide the barrier
@@ -37,9 +35,8 @@ public interface BorderShower {
     /**
      * Refreshes the barrier view, if required
      * @param user user 
-     * @param island island
      */
-    public default void refreshView(User user, Island island){
+    public default void refreshView(User user){
         // Do nothing
     }
 

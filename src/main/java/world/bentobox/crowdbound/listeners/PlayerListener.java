@@ -78,8 +78,7 @@ public class PlayerListener implements Listener {
         user.getPlayer().setWorldBorder(null);
 
         // Show the border if required one tick after   
-        Bukkit.getScheduler().runTask(addon.getPlugin(), () -> addon.getIslands().getIslandAt(e.getPlayer().getLocation()).ifPresent(i -> 
-        show.showBorder(e.getPlayer(), i)));
+        Bukkit.getScheduler().runTask(addon.getPlugin(), () -> show.showBorder(e.getPlayer()));
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -92,8 +91,7 @@ public class PlayerListener implements Listener {
         Player player = e.getPlayer();
         if (isOn(player)) {
             show.clearUser(User.getInstance(e.getPlayer()));
-            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> addon.getIslands()
-                    .getIslandAt(e.getPlayer().getLocation()).ifPresent(i -> show.showBorder(e.getPlayer(), i)));
+            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> show.showBorder(e.getPlayer()));
         }
     }
 
@@ -143,12 +141,13 @@ public class PlayerListener implements Listener {
                 e.setCancelled(false);
             }
 
-            show.showBorder(player, i);
+            show.showBorder(player);
         }, () -> {
             if (isBlacklistedCause) {
                 e.setCancelled(true);
                 return;
             }
+            show.hideBorder(User.getInstance(player));
         })
                 );
     }
@@ -288,9 +287,7 @@ public class PlayerListener implements Listener {
         Player player = e.getPlayer();
         // Remove head movement
         if (isOn(player) && !e.getFrom().toVector().equals(e.getTo().toVector())) {
-            addon.getIslands()
-            .getIslandAt(e.getPlayer().getLocation())
-            .ifPresent(i -> show.refreshView(User.getInstance(e.getPlayer()), i));
+            show.refreshView(User.getInstance(e.getPlayer()));
         }
     }
 
@@ -303,8 +300,7 @@ public class PlayerListener implements Listener {
         // Remove head movement
         if (!e.getFrom().toVector().equals(e.getTo().toVector())) {
             e.getVehicle().getPassengers().stream().filter(Player.class::isInstance).map(Player.class::cast)
-                    .filter(this::isOn).forEach(p -> addon.getIslands().getIslandAt(p.getLocation())
-                            .ifPresent(i -> show.refreshView(User.getInstance(p), i)));
+                    .filter(this::isOn).forEach(p -> show.refreshView(User.getInstance(p)));
         }
     }
 
@@ -318,7 +314,7 @@ public class PlayerListener implements Listener {
         e.getIsland().getPlayersOnIsland().forEach(player -> {
             if (isOn(player)) {
                 show.hideBorder(User.getInstance(player));
-                show.showBorder(player, e.getIsland());
+                show.showBorder(player);
             }
         });
     }

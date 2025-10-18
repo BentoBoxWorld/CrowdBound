@@ -12,7 +12,6 @@ import org.bukkit.util.Vector;
 
 import world.bentobox.bentobox.api.metadata.MetaDataValue;
 import world.bentobox.bentobox.api.user.User;
-import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.util.Util;
 import world.bentobox.crowdbound.listeners.BorderShower;
 
@@ -21,29 +20,31 @@ import world.bentobox.crowdbound.listeners.BorderShower;
  * @author tastybento
  *
  */
-public class ShowVirtualWorldBorder implements BorderShower {
+public class ShowWorldBorder implements BorderShower {
 
     private final CrowdBound addon;
 
-    public ShowVirtualWorldBorder(CrowdBound addon) {
+    public ShowWorldBorder(CrowdBound addon) {
         this.addon = addon;
     }
 
     @Override
-    public void showBorder(Player player, Island island) {
+    public void showBorder(Player player) {
         if (!Objects.requireNonNull(User.getInstance(player)).getMetaData(BORDER_STATE_META_DATA).map(MetaDataValue::asBoolean).orElse(true)) {
             return;
         }
-        Location l = island.getProtectionCenter();
-        if (player.getWorld().getEnvironment() == Environment.NETHER) {
-            l.multiply(8);
-        }
-        WorldBorder wb = Bukkit.createWorldBorder();
-        wb.setCenter(l);
-        double size = Math.min(island.getRange() * 2D, (island.getProtectionRange()) * 2D);
-        wb.setSize(size);
-        wb.setWarningDistance(0);
-        player.setWorldBorder(wb);
+        addon.getIslands().getIslandAt(player.getLocation()).ifPresent(island -> {
+            Location l = island.getProtectionCenter();
+            if (player.getWorld().getEnvironment() == Environment.NETHER) {
+                l.multiply(8);
+            }
+            WorldBorder wb = Bukkit.createWorldBorder();
+            wb.setCenter(l);
+            double size = Math.min(island.getRange() * 2D, (island.getProtectionRange()) * 2D);
+            wb.setSize(size);
+            wb.setWarningDistance(0);
+            player.setWorldBorder(wb);
+        });
     }
 
     @Override

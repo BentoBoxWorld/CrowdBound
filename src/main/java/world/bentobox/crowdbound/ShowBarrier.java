@@ -20,7 +20,6 @@ import com.google.common.base.Enums;
 
 import world.bentobox.bentobox.api.metadata.MetaDataValue;
 import world.bentobox.bentobox.api.user.User;
-import world.bentobox.bentobox.database.objects.Island;
 import world.bentobox.bentobox.util.Util;
 import world.bentobox.crowdbound.listeners.BorderShower;
 
@@ -57,24 +56,26 @@ public class ShowBarrier implements BorderShower {
      * @param island - island
      */
     @Override
-    public void showBorder(Player player, Island island) {
+    public void showBorder(Player player) {
 
         if (!Objects.requireNonNull(User.getInstance(player)).getMetaData(BORDER_STATE_META_DATA).map(MetaDataValue::asBoolean).orElse(true)) {
             return;
         }
-        int offset = 0;
-        // Get the locations to show
-        Location loc = player.getLocation();
-        showWalls(player, loc,
-                Math.max(island.getMinX(), island.getMinProtectedX() - offset),
-                Math.min(island.getMaxX(), island.getMaxProtectedX() + offset),
-                Math.max(island.getMinZ(),island.getMinProtectedZ() - offset),
-                Math.min(island.getMaxZ(), island.getMaxProtectedZ() + offset), false);
+        addon.getIslands().getIslandAt(player.getLocation()).ifPresent(island -> {
+            int offset = 0;
+            // Get the locations to show
+            Location loc = player.getLocation();
+            showWalls(player, loc,
+                    Math.max(island.getMinX(), island.getMinProtectedX() - offset),
+                    Math.min(island.getMaxX(), island.getMaxProtectedX() + offset),
+                    Math.max(island.getMinZ(),island.getMinProtectedZ() - offset),
+                    Math.min(island.getMaxZ(), island.getMaxProtectedZ() + offset), false);
+        });
     }
 
     private void showWalls(Player player, Location loc, int xMin, int xMax, int zMin, int zMax, boolean max) {
         if (loc.getBlockX() - xMin < BARRIER_RADIUS) {
-            
+
             // Close to min x
             for (int z = Math.max(loc.getBlockZ() - BARRIER_RADIUS, zMin); z < loc.getBlockZ() + BARRIER_RADIUS && z < zMax; z++) {
                 for (int y = -BARRIER_RADIUS; y < BARRIER_RADIUS; y++) {
@@ -126,7 +127,7 @@ public class ShowBarrier implements BorderShower {
                 && player.getLocation().getBlockZ() == k) {
             teleportPlayer(player);
         }
-        
+
         Location l = new Location(player.getWorld(), i, j, k);
         Util.getChunkAtAsync(l).thenAccept(c -> {
             if (addon.getSettings().isShowParticles()) {
@@ -184,8 +185,8 @@ public class ShowBarrier implements BorderShower {
     }
 
     @Override
-    public void refreshView(User user, Island island) {
-        this.showBorder(user.getPlayer(), island);
+    public void refreshView(User user) {
+        this.showBorder(user.getPlayer());
     }
 
     private class BarrierBlock {
