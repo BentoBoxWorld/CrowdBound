@@ -10,7 +10,7 @@ crowdbound:
     # The default action for new player command call.
     # Sub-command of main player command that will be run on first player command call.
     # By default it is sub-command 'create'.
-    new-player-action: create
+    new-player-action: spawn
     # The default action for player command.
     # Sub-command of main player command that will be run on each player command call.
     # By default it is sub-command 'go'.

@@ -12,9 +12,12 @@ permissions:
   crowdbound.island:
    description: Allow island command usage
    default: true
+  crowdbound.claim:
+    description: Allow island command usage
+    default: true
   crowdbound.island.create:
     description: Allow island creation
-    default: true
+    default: false
   crowdbound.island.home:
     description: Allow teleporting to player island
     default: true
@@ -50,7 +53,7 @@ permissions:
     default: true
   crowdbound.island.reset:
     description: Player can use the island reset or restart command
-    default: true  
+    default: false  
   crowdbound.island.team:
     description: Let a player use team command
     default: true

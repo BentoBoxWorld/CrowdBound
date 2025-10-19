@@ -21,6 +21,7 @@ import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.crowdbound.commands.player.ClaimCommand;
+import world.bentobox.crowdbound.commands.player.SpawnCommand;
 import world.bentobox.crowdbound.listeners.BorderShower;
 import world.bentobox.crowdbound.listeners.PlayerListener;
 
@@ -67,6 +68,7 @@ public class CrowdBound extends GameModeAddon {
                 super.setup();
                 // Commands
                 new ClaimCommand(this);
+                new SpawnCommand(this);
             }
         };
 
