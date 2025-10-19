@@ -20,6 +20,7 @@ import world.bentobox.bentobox.api.commands.admin.DefaultAdminCommand;
 import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
+import world.bentobox.crowdbound.commands.admin.WorldBorderCommand;
 import world.bentobox.crowdbound.commands.player.ClaimCommand;
 import world.bentobox.crowdbound.commands.player.SpawnCommand;
 import world.bentobox.crowdbound.listeners.BorderShower;
@@ -78,6 +79,7 @@ public class CrowdBound extends GameModeAddon {
             {
                 super.setup();
                 // Special commands
+                new WorldBorderCommand(this);
             }
         };
     }
@@ -239,7 +241,8 @@ public class CrowdBound extends GameModeAddon {
      * @return border size
      */
     public double getBorderSize() {
-        int newBorderSize = Math.max(getSettings().getBarrierIncreaseBlocks(), (this.getSettings().getBarrierIncreaseBlocks() * Bukkit.getServer().getOnlinePlayers().size()));
+        int newBorderSize = getSettings().isManualBorderSize() ? borderSize :
+                Math.max(getSettings().getBarrierIncreaseBlocks(), (this.getSettings().getBarrierIncreaseBlocks() * Bukkit.getServer().getOnlinePlayers().size()));
          if (newBorderSize < borderSize) {
             if (task != null) {
                 // End any current task to replace it
@@ -263,4 +266,13 @@ public class CrowdBound extends GameModeAddon {
         }
         return borderSize;
     }
+
+    /**
+     * @param borderSize the borderSize to set
+     */
+    public void setBorderSize(int borderSize) {
+        this.borderSize = borderSize;
+    }
+    
+    
 }

@@ -72,8 +72,13 @@ public class Settings implements WorldSettings {
     private Difficulty difficulty = Difficulty.NORMAL;
     
     /* Unique CrowdBound settings */
+    @ConfigComment("Use manual world border sizing")
+    @ConfigComment("Set to true to overide the automatic world border sizing based on the number of online players.")
+    @ConfigEntry(path = "world.manual-border-size")
+    private boolean manualBorderSize = false;
+    
     @ConfigComment("Minimum claim distance from spawn in blocks.")
-    @ConfigEntry(path = "world.minimum distance")
+    @ConfigEntry(path = "world.minimum-distance")
     private int minimumClaimDistance = 320;
     
     @ConfigComment("Global border size increase per online player in blocks.")
@@ -1832,6 +1837,20 @@ public class Settings implements WorldSettings {
      */
     public void setMemberBonus(int memberBonus) {
         this.memberBonus = memberBonus;
+    }
+
+    /**
+     * @return the manualBorderSize
+     */
+    public boolean isManualBorderSize() {
+        return manualBorderSize;
+    }
+
+    /**
+     * @param manualBorderSize the manualBorderSize to set
+     */
+    public void setManualBorderSize(boolean manualBorderSize) {
+        this.manualBorderSize = manualBorderSize;
     }
 
 }

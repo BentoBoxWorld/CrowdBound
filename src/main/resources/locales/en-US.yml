@@ -8,6 +8,7 @@ crowdbound:
     Island: Claim
     an-island: a claim
     islands: claims
+    Islands: Claims
   teleporting-to-spawn: "&c You were outside the border. Teleported to spawn.."
   errors:
     not-in-world: "&c You must be in the world to claim"

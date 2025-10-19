@@ -42,15 +42,20 @@ public class ShowWorldBorder implements BorderShower {
             if (player.getWorld().getEnvironment() == Environment.NETHER) {
                 l.multiply(8);
             }
-            // Check if the island is entirely within the world barrier
+            // Check if the claim is entirely within the world barrier
             Location center = Objects.requireNonNullElse(addon.getIslands().getSpawnPoint(player.getWorld()), player.getWorld().getSpawnLocation());
-            double dist = addon.getBorderSize();
+            double dist = addon.getBorderSize() / 2D;
            BoundingBox worldBB = BoundingBox.of(center.toVector(), dist, dist, dist);
            if (worldBB.contains(island.getBoundingBox())) {
+               BentoBox.getInstance().logDebug("Claim is within the world barrier");
+               BentoBox.getInstance().logDebug("world barrier bb = " + worldBB);
+               BentoBox.getInstance().logDebug("Player location = " + player.getLocation());
+               BentoBox.getInstance().logDebug("Player in world border? " + worldBB.contains(player.getLocation().toVector()));
                showWorldBarrier(player);
                return;
            }
-           // Island is isolated so show the world barrier 
+           BentoBox.getInstance().logDebug("Claim is not within the world barrier");
+           // Claim is isolated so show the world barrier 
             WorldBorder wb = Bukkit.createWorldBorder();
             wb.setCenter(l);
             double size = Math.min(island.getRange() * 2D, (island.getProtectionRange()) * 2D);
@@ -77,7 +82,9 @@ public class ShowWorldBorder implements BorderShower {
         double size = addon.getBorderSize();
         wb.setSize(size);
         wb.setWarningDistance(5);
+        
         if (!wb.isInside(player.getLocation())) {
+            BentoBox.getInstance().logDebug("Player is outside the barrier");
             User.getInstance(player).sendMessage("crowdbound.teleporting-to-spawn");
             new SafeSpotTeleport.Builder(addon.getPlugin()).entity(player).location(center).build();
         }

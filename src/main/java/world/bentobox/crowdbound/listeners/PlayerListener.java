@@ -250,7 +250,7 @@ public class PlayerListener implements Listener {
                 return;
             }
             // Eject from mount if outside the protection range
-            if (!player.getWorldBorder().isInside(loc)) {
+            if (player.getWorldBorder() != null && !player.getWorldBorder().isInside(loc)) {
                 // Force the dismount event for custom entities
                 if (!event.getMount().eject()) {
                     var dismountEvent = new EntityDismountEvent(player, event.getMount());

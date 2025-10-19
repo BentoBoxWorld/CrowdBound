@@ -18,73 +18,73 @@ permissions:
   crowdbound.create:
     description: Allow island creation
     default: false
-  crowdbound.home:
+  crowdbound.island.home:
     description: Allow teleporting to player island
     default: true
-  crowdbound.sethome:
+  crowdbound.island.sethome:
     description: Let the player use the sethome command
     default: true
-  crowdbound.info:
+  crowdbound.island.info:
     description: Let the player check other players info
     default: true
-  crowdbound.lock:
+  crowdbound.island.lock:
     description: Allows island locking
     default: true
-  crowdbound.near:
+  crowdbound.island.near:
     description: Players can see nearby island names
     default: true
-  crowdbound.expel:
+  crowdbound.island.expel:
     description: Allows expelling of visitors
     default: true
-  crowdbound.ban:
+  crowdbound.island.ban:
     description: Allows banning of visitors
     default: true
-  crowdbound.settings:
+  crowdbound.island.settings:
     description: Player can see server settings
     default: true
-  crowdbound.language:
+  crowdbound.island.language:
     description: Player can select a language
     default: true
-  crowdbound.name:
+  crowdbound.island.name:
     description: Player can set the name of their island
     default: true
-  crowdbound.spawn:
+  crowdbound.island.spawn:
     description: Player can use the island spawn command if spawn exists
     default: true
-  crowdbound.reset:
+  crowdbound.island.reset:
     description: Player can use the island reset or restart command
     default: false  
-  crowdbound.team:
+  crowdbound.island.team:
     description: Let a player use team command
     default: true
-  crowdbound.team.setowner:
+  crowdbound.island.team.setowner:
     description: Let a player change the team owner
     default: true
-  crowdbound.team.invite:
+  crowdbound.island.team.invite:
     description: Let a player invite others
     default: true
-  crowdbound.team.reject:
+  crowdbound.island.team.reject:
     description: Let a player reject invites
     default: true
-  crowdbound.team.leave:
+  crowdbound.island.team.leave:
     description: Let a player leave the team
     default: true
-  crowdbound.team.kick:
+  crowdbound.island.team.kick:
     description: Let a player kick team members
     default: true
-  crowdbound.team.accept:
+  crowdbound.island.team.accept:
     description: Let a player accept invitations
     default: true
-  crowdbound.team.trust:
+  crowdbound.island.team.trust:
     description: Let a player use team trust commands
     default: true
-  crowdbound.team.coop:
+  crowdbound.island.team.coop:
     description: Let a player use team coop commands
     default: true
-  crowdbound.team.promote:
+  crowdbound.island.team.promote:
     description: Let a player use promote commands
     default: true
-  crowdbound.settings.*:
+  crowdbound.island.settings.*:
     description: Allow use of settings on island
     default: true
   crowdbound.mod.info:
