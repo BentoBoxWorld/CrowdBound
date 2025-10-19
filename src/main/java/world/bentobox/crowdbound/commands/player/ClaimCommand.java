@@ -44,7 +44,7 @@ public class ClaimCommand extends CompositeCommand {
     private final NewIslandLocationStrategy strategy;
 
     /**
-     * Command to create an island
+     * Command to create a claim
      * 
      * @param islandCommand - parent command
      */
@@ -57,7 +57,6 @@ public class ClaimCommand extends CompositeCommand {
     public void setup() {
         setPermission("claim");
         setOnlyPlayer(true);
-        setParametersHelp("commands.claim.parameters");
         setDescription("commands.claim.description");
     }
 

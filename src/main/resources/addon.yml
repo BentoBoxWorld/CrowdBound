@@ -1,7 +1,7 @@
 name: CrowdBound
 main: world.bentobox.crowdbound.CrowdBound
 version: ${version}${build.number}
-api-version: 3.8.0
+api-version: 3.8.2
 metrics: true
 icon: "COMPOSTER"
 repository: "BentoBoxWorld/CrowdBound"

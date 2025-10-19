@@ -17,6 +17,8 @@ crowdbound:
     too-close-to-spawn: "&c You are too close to spawn to make a claim. Move further out."
     no-fit-inside: "&c This claim cannot completely fit inside the boundary."
   commands:
+    claim:
+        description: "Attemtps to make a claim"
     island:
       create:
         creating-island: "&a Trying to claim..."
