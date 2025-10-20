@@ -1,6 +1,9 @@
 package world.bentobox.crowdbound.commands.admin;
 
 import java.util.List;
+import java.util.Optional;
+
+import org.bukkit.Bukkit;
 
 import world.bentobox.bentobox.api.commands.CompositeCommand;
 import world.bentobox.bentobox.api.localization.TextVariables;
@@ -52,6 +55,8 @@ public class WorldBorderCommand extends CompositeCommand {
     public boolean execute(User user, String label, List<String> args) {
         if (args.isEmpty()) return false;
         return switch (args.getFirst()) {
+        case "off" -> turnOff(user);
+        case "on" -> turnOn(user);
         case "info" -> showInfo(user);
         case "auto" -> setAuto(user);
         case "set" -> setSize(user, args);
@@ -63,10 +68,28 @@ public class WorldBorderCommand extends CompositeCommand {
     }
 
 
+    private boolean turnOn(User user) {
+        addon.getSettings().setDisableWorldBorder(false);
+        addon.saveWorldSettings();
+        Bukkit.getServer().getOnlinePlayers().stream().forEach(addon.getBorderShower()::showBorder);
+        user.sendMessage("general.success");
+        return true;
+    }
+
+    private boolean turnOff(User user) {
+        addon.getSettings().setDisableWorldBorder(true);
+        addon.saveWorldSettings();
+        addon.cancelBorderTask();
+        Bukkit.getServer().getOnlinePlayers().stream().map(User::getInstance).forEach(addon.getBorderShower()::hideBorder);
+        user.sendMessage("general.success");
+        return true;
+    }
+
     private boolean setAuto(User user) {
         // Turn on auto
         addon.getSettings().setManualBorderSize(false);
         addon.saveWorldSettings();
+        Bukkit.getServer().getOnlinePlayers().stream().forEach(addon.getBorderShower()::showBorder);
         user.sendMessage("general.success");
         return true;
     }
@@ -85,13 +108,16 @@ public class WorldBorderCommand extends CompositeCommand {
                 user.sendMessage("commands.admin.worldborder.set-size.needs-value");
                 return false;
             }
-
+            // Stop any border changing
+            addon.cancelBorderTask();
             // Validation and extraction
             int result = Integer.parseInt(argument.trim()); 
             addon.setBorderSize(result);
             // Turn off auto
             addon.getSettings().setManualBorderSize(true);
             addon.saveWorldSettings();
+            // Update all players
+            Bukkit.getServer().getOnlinePlayers().stream().forEach(addon.getBorderShower()::showBorder);
             user.sendMessage("general.success");
             return true;
 
@@ -104,6 +130,12 @@ public class WorldBorderCommand extends CompositeCommand {
     private boolean showInfo(User user) {
         user.sendMessage("commands.admin.worldborder.info", TextVariables.NUMBER, String.valueOf((int)((CrowdBound)getAddon()).getBorderSize()));
         return true;
+    }
+    
+    @Override
+    public Optional<List<String>> tabComplete(User user, String alias, List<String> args)
+    {
+        return Optional.of(List.of("on", "off", "set", "auto", "info"));
     }
 
 }

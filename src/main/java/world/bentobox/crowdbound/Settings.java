@@ -72,6 +72,11 @@ public class Settings implements WorldSettings {
     private Difficulty difficulty = Difficulty.NORMAL;
     
     /* Unique CrowdBound settings */
+    @ConfigComment("Disable world border")
+    @ConfigComment("Set to true to disable the worldborder feature.")
+    @ConfigEntry(path = "world.disable-worldborder")
+    private boolean disableWorldBorder = false;
+    
     @ConfigComment("Use manual world border sizing")
     @ConfigComment("Set to true to overide the automatic world border sizing based on the number of online players.")
     @ConfigEntry(path = "world.manual-border-size")
@@ -1851,6 +1856,20 @@ public class Settings implements WorldSettings {
      */
     public void setManualBorderSize(boolean manualBorderSize) {
         this.manualBorderSize = manualBorderSize;
+    }
+
+    /**
+     * @return the disableWorldBorder
+     */
+    public boolean isDisableWorldBorder() {
+        return disableWorldBorder;
+    }
+
+    /**
+     * @param disableWorldBorder the disableWorldBorder to set
+     */
+    public void setDisableWorldBorder(boolean disableWorldBorder) {
+        this.disableWorldBorder = disableWorldBorder;
     }
 
 }

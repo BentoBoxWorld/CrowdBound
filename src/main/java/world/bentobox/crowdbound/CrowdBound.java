@@ -274,5 +274,13 @@ public class CrowdBound extends GameModeAddon {
         this.borderSize = borderSize;
     }
     
+    /**
+     * Cancels any active border reduction task
+     */
+    public void cancelBorderTask() {
+        if (this.task != null) {
+            this.task.cancel();
+        }
+    }
     
 }

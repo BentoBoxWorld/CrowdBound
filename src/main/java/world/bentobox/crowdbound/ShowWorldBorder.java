@@ -33,7 +33,7 @@ public class ShowWorldBorder implements BorderShower {
 
     @Override
     public void showBorder(Player player) {
-        if (!Objects.requireNonNull(User.getInstance(player)).getMetaData(BORDER_STATE_META_DATA).map(MetaDataValue::asBoolean).orElse(true)) {
+        if (addon.getSettings().isDisableWorldBorder() || !Objects.requireNonNull(User.getInstance(player)).getMetaData(BORDER_STATE_META_DATA).map(MetaDataValue::asBoolean).orElse(true)) {
             return;
         }
         addon.getIslands().getIslandAt(player.getLocation()).ifPresentOrElse(island -> {
