@@ -36,25 +36,25 @@ public class ClaimLocationStrategy implements NewIslandLocationStrategy {
             user.sendMessage("crowdbound.errors.too-close-to-spawn");
             return null;
         }
-        // Quick check using the island grid cache.
+        // Quick check using the claim grid cache.
         if (plugin.getIslands().isIslandAt(location)) {
             user.sendMessage("crowdbound.errors.already-claimed");
             return null;
         }
 
-        // Check the four corners of the island protection area to be more thorough.
+        // Check the four corners of the claim protection area to be more thorough.
         int dist = plugin.getIWM().getIslandDistance(world);
         Set<Location> locs = new HashSet<>();
         locs.add(location);
 
-        // Define the corners of the island's bounding box.
+        // Define the corners of the claim's bounding box.
         locs.add(new Location(world, location.getX() - dist, 0, location.getZ() - dist));
         locs.add(new Location(world, location.getX() - dist, 0, location.getZ() + dist - 1));
         locs.add(new Location(world, location.getX() + dist - 1, 0, location.getZ() - dist));
         locs.add(new Location(world, location.getX() + dist - 1, 0, location.getZ() + dist - 1));
 
          for (Location l : locs) {
-            // Check if an island exists
+            // Check if a claim exists
             if (plugin.getIslands().getIslandAt(l).isPresent()) {
                 user.sendMessage("crowdbound.errors.overlap", "[xyz]", Util.xyz(l.toVector()));
                 return null;
