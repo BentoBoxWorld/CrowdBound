@@ -59,6 +59,10 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
+        // Check if player is in the world
+        if (!addon.inWorld(player.getWorld())) {
+            return;
+        }
         if (isOn(player)) {
             // Run one-tick after joining because meta data cannot be set otherwise
             Bukkit.getScheduler().runTask(addon.getPlugin(), () -> processEvent(e));
@@ -69,7 +73,7 @@ public class PlayerListener implements Listener {
 
     protected void processEvent(PlayerJoinEvent e) {
         Player player = e.getPlayer();
-        if (!isOn(player)) {
+        if (!isOn(player) || !addon.inWorld(player.getWorld())) {
             return;
         }
 
