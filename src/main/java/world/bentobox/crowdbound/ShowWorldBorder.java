@@ -38,10 +38,10 @@ public class ShowWorldBorder implements BorderShower {
         }
         addon.getIslands().getIslandAt(player.getLocation()).ifPresentOrElse(island -> {
             
-            Location l = island.getProtectionCenter();
-            if (player.getWorld().getEnvironment() == Environment.NETHER) {
-                l.multiply(8);
-            }
+            Location l = island.getProtectionCenter().toVector().toLocation(player.getWorld());
+           // if (player.getWorld().getEnvironment() == Environment.NETHER) {
+            //    l.multiply(8);
+            //}
             // Check if the claim is entirely within the world barrier
             Location center = Objects.requireNonNullElse(addon.getIslands().getSpawnPoint(player.getWorld()), player.getWorld().getSpawnLocation());
             double dist = addon.getBorderSize() / 2D;
