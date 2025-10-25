@@ -142,7 +142,7 @@ public class ClaimCommand extends CompositeCommand {
                 return false;
             }
             // Make island
-            return makeIsland(user, name);
+            return makeClaim(user, name);
         } else {
             if (getPlugin().getSettings().getIslandNumber() > 1
                     && checkMaxUses(user, BlueprintsManager.DEFAULT_BUNDLE_NAME)) {
@@ -154,7 +154,7 @@ public class ClaimCommand extends CompositeCommand {
                 IslandCreationPanel.openPanel(this, user, label, false);
                 return true;
             }
-            return makeIsland(user, BlueprintsManager.DEFAULT_BUNDLE_NAME);
+            return makeClaim(user, BlueprintsManager.DEFAULT_BUNDLE_NAME);
         }
     }
 
@@ -192,14 +192,14 @@ public class ClaimCommand extends CompositeCommand {
     }
 
     /**
-     * Creates a new island for the user using the specified blueprint.
+     * Creates a new claim for the user using the specified blueprint.
      * Also handles reset cooldown if configured.
      * 
-     * @param user The user getting the new island
+     * @param user The user getting the new claim
      * @param name The blueprint bundle name to use
-     * @return true if island creation was successful
+     * @return true if claim creation was successful
      */
-    private boolean makeIsland(User user, String name) {
+    private boolean makeClaim(User user, String name) {
         user.sendMessage("commands.island.create.creating-island");
         
         try {
