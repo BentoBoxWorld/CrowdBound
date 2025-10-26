@@ -23,6 +23,8 @@ import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.crowdbound.commands.admin.WorldBorderCommand;
 import world.bentobox.crowdbound.commands.player.ClaimCommand;
 import world.bentobox.crowdbound.commands.player.SpawnCommand;
+import world.bentobox.crowdbound.generators.NetherChunkGenerator;
+import world.bentobox.crowdbound.generators.NetherChunkMaker;
 import world.bentobox.crowdbound.listeners.BorderShower;
 import world.bentobox.crowdbound.listeners.PlayerListener;
 
@@ -107,6 +109,7 @@ public class CrowdBound extends GameModeAddon {
         }
         borderShower = this.createBorder();
         this.registerListener(new PlayerListener(this));
+        this.registerListener(new NetherChunkMaker(this));
     }
 
     @Override
@@ -151,12 +154,12 @@ public class CrowdBound extends GameModeAddon {
      */
     private World getWorld(String worldName2, Environment env) {
         // Set world name
-        worldName2 = env.equals(World.Environment.NETHER) ? worldName2 + NETHER : worldName2;
-        worldName2 = env.equals(World.Environment.THE_END) ? worldName2 + THE_END : worldName2;
+        worldName2 = env == World.Environment.NETHER ? worldName2 + NETHER : worldName2;
+        worldName2 = env == World.Environment.THE_END ? worldName2 + THE_END : worldName2;
         //boxedBiomeProvider = new BoxedBiomeGenerator(this);
         World w = WorldCreator
                 .name(worldName2)
-                //.generator(getChunkGenerator(env))
+                //.generator(env == World.Environment.NETHER ? new NetherChunkGenerator(this) : null)
                 .environment(env)
                 .seed(this.getSettings().getSeed())
                 .createWorld();

@@ -27,7 +27,7 @@ import world.bentobox.bentobox.database.objects.adapters.FlagSerializer2;
  */
 @StoreAt(filename="config.yml", path="addons/CrowdBound") // Explicitly call out what name this should have.
 @ConfigComment("CrowdBound Configuration [version]")
-public class Settings implements WorldSettings {
+public class Settings implements WorldSettings {    
     
     /* Commands */
     @ConfigComment("Player Command. What command users will run to access their claim.")
@@ -162,6 +162,19 @@ public class Settings implements WorldSettings {
     @ConfigComment("portal will return them back to their areas.")
     @ConfigEntry(path = "world.nether.generate")
     private boolean netherGenerate = true;
+    
+    @ConfigComment("Make the UpsideDown nether - this is a nether that mirrors the overworld")
+    @ConfigEntry(path = "world.nether.upsidedown.generate")
+    private boolean useUpsideDown = true;
+    
+    @ConfigComment("Level of destruction of UpsideDown nether in %. Default is 5%.")
+    @ConfigComment("The UpsideDown is not pretty like the overworld...")
+    @ConfigEntry(path = "world.nether.upsidedown.attrition")
+    private int attrition = 5;
+    @ConfigComment("Maximum number of chests to fill in a chunk. Default is 1.")
+    @ConfigComment("Chests get filled with random nether loot")
+    @ConfigEntry(path = "world.nether.upsidedown.chest-fills")
+    private int chestFills = 1;
 
     @ConfigComment("This option indicates if nether portals should be linked via dimensions.")
     @ConfigComment("Option will simulate vanilla portal mechanics that links portals together")
@@ -1870,6 +1883,48 @@ public class Settings implements WorldSettings {
      */
     public void setDisableWorldBorder(boolean disableWorldBorder) {
         this.disableWorldBorder = disableWorldBorder;
+    }
+
+    /**
+     * @return the useUpsideDown
+     */
+    public boolean isUseUpsideDown() {
+        return useUpsideDown;
+    }
+
+    /**
+     * @param useUpsideDown the useUpsideDown to set
+     */
+    public void setUseUpsideDown(boolean useUpsideDown) {
+        this.useUpsideDown = useUpsideDown;
+    }
+
+    /**
+     * @return the attrition
+     */
+    public int getAttrition() {
+        return attrition;
+    }
+
+    /**
+     * @param attrition the attrition to set
+     */
+    public void setAttrition(int attrition) {
+        this.attrition = attrition;
+    }
+
+    /**
+     * @return the chestFills
+     */
+    public int getChestFills() {
+        return chestFills;
+    }
+
+    /**
+     * @param chestFills the chestFills to set
+     */
+    public void setChestFills(int chestFills) {
+        this.chestFills = chestFills;
     }
 
 }
