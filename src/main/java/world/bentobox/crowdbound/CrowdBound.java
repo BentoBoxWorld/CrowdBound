@@ -1,19 +1,29 @@
 package world.bentobox.crowdbound;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.SpawnCategory;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 import org.eclipse.jdt.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.addons.GameModeAddon;
 import world.bentobox.bentobox.api.commands.admin.DefaultAdminCommand;
@@ -23,7 +33,6 @@ import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.crowdbound.commands.admin.WorldBorderCommand;
 import world.bentobox.crowdbound.commands.player.ClaimCommand;
 import world.bentobox.crowdbound.commands.player.SpawnCommand;
-import world.bentobox.crowdbound.generators.NetherChunkGenerator;
 import world.bentobox.crowdbound.generators.NetherChunkMaker;
 import world.bentobox.crowdbound.listeners.BorderShower;
 import world.bentobox.crowdbound.listeners.PlayerListener;
@@ -36,6 +45,10 @@ public class CrowdBound extends GameModeAddon {
 
     private static final String NETHER = "_nether";
     private static final String THE_END = "_the_end";
+    
+    // Define a static key for the custom item, primarily for referencing its material later if needed.
+    public static final Material WARPED_COMPASS_MATERIAL = Material.COMPASS;
+
 
     // Settings
     private Settings settings;
@@ -110,6 +123,9 @@ public class CrowdBound extends GameModeAddon {
         borderShower = this.createBorder();
         this.registerListener(new PlayerListener(this));
         this.registerListener(new NetherChunkMaker(this));
+        
+        // Register recipe for warped compass
+        registerWarpedCompassRecipe();
     }
 
     @Override
@@ -286,4 +302,79 @@ public class CrowdBound extends GameModeAddon {
         }
     }
     
+    /**
+     * Creates a new ItemStack representing the Warped Compass with all its custom metadata.
+     * This method is used both for the recipe result and for checking items.
+     * @return The custom Warped Compass ItemStack.
+     */
+    public static ItemStack createWarpedCompassItem() {
+        ItemStack warpedCompass = new ItemStack(WARPED_COMPASS_MATERIAL);
+        ItemMeta meta = warpedCompass.getItemMeta();
+
+        // Set the custom display name using the Adventure API
+        Component displayName = Component.text("Warped Compass", NamedTextColor.AQUA)
+                                         .decorate(TextDecoration.BOLD);
+        meta.displayName(displayName);
+
+        // Set the lore/tooltip using the Adventure API
+        List<Component> lore = Arrays.asList(
+            Component.text("Hold fast to the needle when the realm is stale.", NamedTextColor.GRAY),
+            Component.text("A single spark is all it takes to refresh the flame.", NamedTextColor.GRAY),
+            Component.empty(), // Represents an empty line
+            Component.text("Consumed upon entry to re-thread the Nether.", NamedTextColor.RED)
+        );
+        meta.lore(lore);
+        warpedCompass.setItemMeta(meta);
+        return warpedCompass;
+    }
+    
+    /**
+     * Checks if the given ItemStack is a Warped Compass based on its material and metadata.
+     * @param item The ItemStack to check.
+     * @return true if the item is a Warped Compass, false otherwise.
+     */
+    public static boolean isWarpedCompass(ItemStack item) {
+        if (item == null || item.getType() != WARPED_COMPASS_MATERIAL) {
+            return false;
+        }
+
+        // Use ItemMeta.equals() to check all custom metadata (name, lore, etc.)
+        // We compare the item's meta against the meta of a freshly created reference item.
+        ItemMeta referenceMeta = createWarpedCompassItem().getItemMeta();
+        ItemMeta itemMeta = item.getItemMeta();
+        
+        return itemMeta.equals(referenceMeta);
+    }
+
+    private void registerWarpedCompassRecipe() {
+        // --- 1. Define the Resulting Custom Item: Warped Compass ---
+        // Now uses the new static helper method for consistency.
+        ItemStack warpedCompass = createWarpedCompassItem();
+
+        // --- 2. Create the NamespacedKey and ShapedRecipe ---
+        // A NamespacedKey is required for the recipe to be uniquely identified.
+        NamespacedKey key = new NamespacedKey(this.getPlugin(), "warped_compass");
+        ShapedRecipe recipe = new ShapedRecipe(key, warpedCompass);
+
+        // --- 3. Define the Recipe Shape ---        
+        recipe.shape(
+            "COC",
+            "FRF",
+            "COC"
+        );
+        
+        // --- 4. Define the Ingredients ---
+        // O = Obsidian
+        // C = Crying Obsidian
+        // F = Warped Fungus
+        // L = Recovery Compass
+        recipe.setIngredient('O', Material.OBSIDIAN);
+        recipe.setIngredient('C', Material.CRYING_OBSIDIAN);
+        recipe.setIngredient('F', Material.WARPED_FUNGUS);
+        recipe.setIngredient('R', Material.RECOVERY_COMPASS);
+
+
+        // --- 5. Add the Recipe to the Server ---
+        getServer().addRecipe(recipe);
+    }
 }

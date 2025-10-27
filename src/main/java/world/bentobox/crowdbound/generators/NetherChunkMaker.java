@@ -2,10 +2,15 @@ package world.bentobox.crowdbound.generators;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.PortalType;
+import org.bukkit.Sound;
 import org.bukkit.Tag;
 import org.bukkit.World.Environment;
 import org.bukkit.block.Biome;
@@ -15,27 +20,37 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Fence;
 import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Stairs;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 
+import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.Database;
+import world.bentobox.bentobox.util.ExpiringSet;
 import world.bentobox.bentobox.util.Pair;
 import world.bentobox.crowdbound.CrowdBound;
 import world.bentobox.crowdbound.database.NetherChunksMade;
 
 public class NetherChunkMaker implements Listener {
 
+    private static final int ROOF_HEIGHT = 107;
     private CrowdBound addon;
     private Random rand = new Random();
     private final Database<NetherChunksMade> handler;
     private NetherChunksMade netherChunksMade;
     private final int maxChestFills;
+    private ExpiringSet<UUID> portalPlayer = new ExpiringSet<>(10, TimeUnit.SECONDS);
 
     public NetherChunkMaker(CrowdBound addon) {
         super();
@@ -48,32 +63,107 @@ public class NetherChunkMaker implements Listener {
         }
         maxChestFills = addon.getSettings().getChestFills();
     }
+ 
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onNetherPortalEnter(EntityPortalEnterEvent e) {
+        // Only trigger if the player is going from the overworld to the nether
+        if (e.getPortalType() != PortalType.NETHER 
+                || e.getEntityType() != EntityType.PLAYER
+                || !addon.inWorld(e.getLocation())
+                || portalPlayer.contains(e.getEntity().getUniqueId()) // If they are in the map, ignore
+                ) {
+            return;
+        }
+        Player p = (Player)e.getEntity();
+        // Add the player as teleporting
+        portalPlayer.add(p.getUniqueId());
+        if (e.getLocation().getWorld().getEnvironment() == Environment.NETHER) {
+            return;
+        }
+        
+        if (CrowdBound.isWarpedCompass(p.getInventory().getItemInMainHand()) 
+                || CrowdBound.isWarpedCompass(p.getInventory().getItemInOffHand())) {
+            // Refresh the nether!
+            int chunkRadius = Bukkit.getViewDistance();
+            int x = p.getLocation().getChunk().getX();
+            int z = p.getLocation().getChunk().getZ();
+            // Removing the listing of chunks from the database will cause them to be re-made
+            for (int i = x - chunkRadius; i < x + chunkRadius; i++) {
+                for (int j = z - chunkRadius; j < z + chunkRadius; j++) {
+                    this.netherChunksMade.getChunkSet().remove(Pair.of(i, j));
+                }
+            }
+            handler.saveObject(netherChunksMade);
+            User.getInstance(p).sendMessage("crowdbound.nether.refresh");
+            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> p.playSound(p, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1F, 1F));
+            // Get the item in the main hand
+            ItemStack mainHandItem = p.getInventory().getItemInMainHand();
 
-    @EventHandler
+            if (CrowdBound.isWarpedCompass(mainHandItem)) {
+                // Reduce the amount by 1. If the new amount is 0, Bukkit automatically sets the slot to null.
+                mainHandItem.subtract(1); 
+                return;
+            } 
+
+            // If not in the main hand, check the off-hand
+            ItemStack offHandItem = p.getInventory().getItemInOffHand();
+
+            if (CrowdBound.isWarpedCompass(offHandItem)) {
+                // Reduce the amount by 1.
+                offHandItem.subtract(1);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent e) {
         if (e.getWorld().getEnvironment() != Environment.NETHER 
                 || !addon.getSettings().isUseUpsideDown()
-                || !addon.inWorld(e.getWorld())
-                // Do not regenerate if we've done it already
-                || !netherChunksMade.getChunkSet().add(Pair.of(e.getChunk().getX(), e.getChunk().getZ()))) {
+                || !addon.inWorld(e.getWorld())) {
+            return;
+        }
+        if (!netherChunksMade.getChunkSet().add(Pair.of(e.getChunk().getX(), e.getChunk().getZ()))) {
             return;
         }
         int chestFills = 0;
         handler.saveObjectAsync(netherChunksMade); // Save to database
+
+        // Get the overworld chunk we are copying from
         Chunk overworldChunk = addon.getOverWorld().getChunkAt(e.getChunk().getX(), e.getChunk().getZ());
+        // Determine the attrition
         int rawAttritionValue = addon.getSettings().getAttrition();
         double attrition = (rawAttritionValue >= 0 && rawAttritionValue <= 100)
-            // If TRUE: Calculate the percentage (using 100.0 for double division).
-            ? rawAttritionValue / 100.0
-            // If FALSE: Use the default 5% (0.05).
-            : 0.05;
-        for (int y = e.getWorld().getMinHeight(); y < 107; y++) {
+                // If TRUE: Calculate the percentage (using 100.0 for double division).
+                ? rawAttritionValue / 100.0
+                        // If FALSE: Use the default 5% (0.05).
+                        : 0.05;
+
+        // Remove any tile entity contents
+        Arrays.stream(e.getChunk().getTileEntities())
+        .filter(en -> en.getLocation().getBlockY() < ROOF_HEIGHT)
+        .forEach(tileEntity -> {
+            // Check if the tile entity is an InventoryHolder (like a chest, furnace, etc.)
+            if (tileEntity instanceof InventoryHolder ih) {
+                // Get the inventory and clear its contents
+                ih.getInventory().clear();
+            }
+        });
+        // Removed any entities in this chunk - they will be replaced
+        Arrays.stream(e.getChunk().getEntities())
+        .filter(en -> en.getType() != EntityType.PLAYER)
+        .filter(en -> en.getLocation().getBlockY() < ROOF_HEIGHT)
+        .forEach(Entity::remove);
+
+        // Loop through the chunk and set blocks
+        for (int y = e.getWorld().getMinHeight(); y < ROOF_HEIGHT; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     Block overworldBlock = overworldChunk.getBlock(x, y, z);
                     Block newBlock = e.getChunk().getBlock(x, y, z);
                     newBlock.setBiome(Biome.BASALT_DELTAS);
-                    if (overworldBlock.getType() == newBlock.getType() || y > 100 && rand.nextDouble() < attrition) {
+                    if (overworldBlock.getType() == newBlock.getType() 
+                            || newBlock.getType() == Material.NETHER_PORTAL // We must not touch these otherwise errors occur
+                            || y > 100 && rand.nextDouble() < attrition) {
                         continue;
                     }
                     BlockData bd = overworldBlock.getBlockData();
@@ -168,14 +258,14 @@ public class NetherChunkMaker implements Listener {
                     } else if (Tag.SLABS.isTagged(material)) {
                         newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.NETHER_BRICK_SLAB.createBlockData();
                     } else if (Tag.STAIRS.isTagged(material)) {
-                    
+
                         newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() : Material.NETHER_BRICK_STAIRS.createBlockData() ;
 
                     } else if (Tag.WALLS.isTagged(material)) {
                         newBlockData = rand.nextDouble() < 0.1 ? Material.AIR .createBlockData() :  Material.NETHER_BRICK_WALL.createBlockData();
+                    } else if (newBlock.getType() == Material.OBSIDIAN) {
+                        newBlockData = Material.OBSIDIAN.createBlockData();
                     }
-                    // ... add more tag conversions as needed ...
-
                     // --- Individual Block Conversion (Switch Statement) ---
 
                     else { // Only proceed to switch if no Tag conversion was applied
@@ -195,13 +285,8 @@ public class NetherChunkMaker implements Listener {
                             }
                             break;
                         case OBSIDIAN:
-                            // If it is already obsidian, don't change it
-                            if (newBlock.getType() == Material.OBSIDIAN) {
-                                newBlockData = Material.OBSIDIAN.createBlockData();
-                            } else {
-                                // Don't copy over obsidian
-                                newBlockData = Material.AIR.createBlockData();
-                            }
+                            // Set Obi to air
+                            newBlockData = Material.AIR.createBlockData();
                             break;
                         case HAY_BLOCK:
                             newBlockData = Material.GLOWSTONE.createBlockData();
@@ -311,16 +396,16 @@ public class NetherChunkMaker implements Listener {
             }
         }
         // Now do Mobs
-       Arrays.stream(overworldChunk.getEntities())
-       .filter(en -> en instanceof LivingEntity)
-       .forEach(en -> {
-           EntityType newType = getNetherEnt(en.getType());
-           if (newType != null) {
-               addon.getNetherWorld().spawnEntity(en.getLocation().toVector().toLocation(addon.getNetherWorld()), newType, true);
-           }
-       });
+        Arrays.stream(overworldChunk.getEntities())
+        .filter(en -> en instanceof LivingEntity)
+        .forEach(en -> {
+            EntityType newType = getNetherEnt(en.getType());
+            if (newType != null) {
+                addon.getNetherWorld().spawnEntity(en.getLocation().toVector().toLocation(addon.getNetherWorld()), newType, true);
+            }
+        });
     }
-    
+
     private EntityType getNetherEnt(EntityType type) {
         return  switch (type) {
         case ALLAY:
@@ -363,8 +448,8 @@ public class NetherChunkMaker implements Listener {
             // An Overworld fish, mapped to the hostile GHAST (flying over lava like fish in water)
             yield EntityType.GHAST;
         case COPPER_GOLEM:
-            // A golem variant, mapped to the defensive IRON_GOLEM's Nether counterpart
-            yield EntityType.WITHER_SKELETON; // Wither skeleton protects Nether Fortresses
+            // A golem variant, he continues to exist here!
+            yield EntityType.COPPER_GOLEM;
         case COW:
             // A large, passive mob, mapped to the large, aggressive HOGLIN
             yield EntityType.HOGLIN;
@@ -419,7 +504,7 @@ public class NetherChunkMaker implements Listener {
         case MAGMA_CUBE:
             // Already a Nether mob, keep it
             yield EntityType.MAGMA_CUBE;
-         case MOOSHROOM:
+        case MOOSHROOM:
             // A variant of COW, mapped to the HOGLIN
             yield EntityType.HOGLIN;
         case MULE:
@@ -548,7 +633,7 @@ public class NetherChunkMaker implements Listener {
         default:
             // Default for any remaining non-mob entities (projectiles, items) or unknowns
             yield null;
-           
-           };
+
+        };
     }
 }

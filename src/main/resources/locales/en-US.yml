@@ -17,6 +17,8 @@ crowdbound:
       at [xyz]."
     too-close-to-spawn: "&c You are too close to spawn to make a claim. Move further out."
     no-fit-inside: "&c This claim cannot completely fit inside the boundary."
+  nether:
+    refresh: "&a Kaboom! The Nether is remade! Your warped compass crumbles in your hand!"
   commands:
     admin:
         worldborder:
@@ -24,8 +26,7 @@ crowdbound:
             parameters: '[on][off][set][auto][info]'
             info: "&a The world border has a radius of [number] blocks."
             set-size:
-                needs-value: "&c Set needs an integer value for the size of the world border"
-                
+                needs-value: "&c Set needs an integer value for the size of the world border"          
     claim:
         description: "Attemtps to make a claim"
     island:
