@@ -19,6 +19,11 @@ crowdbound:
     no-fit-inside: "&c This claim cannot completely fit inside the boundary."
   nether:
     refresh: "&a Kaboom! The Nether is remade! Your warped compass crumbles in your hand!"
+  claim:
+    team-increase-owner: "&a Your claim expanded due to a new member!"
+    team-descrease-owner: "&b Your claim is smaller as a team member left."
+    team-increase: "&a This claim expanded due to a new member!"
+    team-descrease-owner: "&b This claim is smaller as a team member left."
   commands:
     admin:
         worldborder:

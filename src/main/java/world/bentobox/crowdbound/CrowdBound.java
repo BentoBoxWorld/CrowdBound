@@ -13,6 +13,7 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.SpawnCategory;
+import org.bukkit.event.Listener;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
@@ -36,6 +37,7 @@ import world.bentobox.crowdbound.commands.player.SpawnCommand;
 import world.bentobox.crowdbound.generators.NetherChunkMaker;
 import world.bentobox.crowdbound.listeners.BorderShower;
 import world.bentobox.crowdbound.listeners.PlayerListener;
+import world.bentobox.crowdbound.listeners.TeamListener;
 
 /**
  * Main Boxed class - provides a survival game inside a box
@@ -58,6 +60,7 @@ public class CrowdBound extends GameModeAddon {
     private final Set<BorderType> availableBorderTypes = EnumSet.of(BorderType.VANILLA, BorderType.BARRIER);
     private int borderSize;
     private @NotNull BukkitTask task;
+    private PlayerListener playerListener;
 
     @Override
     public boolean isFixIslandCenter() {
@@ -121,8 +124,10 @@ public class CrowdBound extends GameModeAddon {
             this.logWarning("CrowdBound recommends the InvSwitcher addon.");
         }
         borderShower = this.createBorder();
-        this.registerListener(new PlayerListener(this));
+        playerListener = new PlayerListener(this);
+        this.registerListener(playerListener);
         this.registerListener(new NetherChunkMaker(this));
+        this.registerListener(new TeamListener(this));
         
         // Register recipe for warped compass
         registerWarpedCompassRecipe();
@@ -376,5 +381,12 @@ public class CrowdBound extends GameModeAddon {
 
         // --- 5. Add the Recipe to the Server ---
         getServer().addRecipe(recipe);
+    }
+
+    /**
+     * @return the playerListener
+     */
+    public PlayerListener getPlayerListener() {
+        return playerListener;
     }
 }
