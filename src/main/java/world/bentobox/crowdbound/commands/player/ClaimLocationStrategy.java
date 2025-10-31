@@ -62,7 +62,7 @@ public class ClaimLocationStrategy implements NewIslandLocationStrategy {
             // Check that everything is within the global world border
             if (!user.getPlayer().getWorldBorder().isInside(l)) {
                 user.sendMessage("crowdbound.errors.no-fit-inside");
-                BentoBox.getInstance().logDebug(l + " would be outside the world border");
+                //BentoBox.getInstance().logDebug(l + " would be outside the world border");
                 return null;
             }
         }

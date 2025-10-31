@@ -231,9 +231,9 @@ public class Settings implements WorldSettings {
     // ---------------------------------------------
 
     /*      CLAIM      */
-    @ConfigComment("Max radius of a single player claim. This is the largest it can grow to.")
-    @ConfigComment("It is the same for every dimension : Overworld, Nether and End.")
-    @ConfigEntry(path = "claim.max-size")
+    @ConfigComment("Size of a single player claim.")
+    @ConfigComment("A claim exists every dimension : Overworld, Nether and End.")
+    @ConfigEntry(path = "claim.size")
     private int islandDistance = 96;
 
     @ConfigComment("Default max team size")

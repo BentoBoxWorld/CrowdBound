@@ -18,6 +18,7 @@ import org.bukkit.util.Vector;
 
 import com.google.common.base.Enums;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.metadata.MetaDataValue;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.util.Util;
@@ -55,7 +56,11 @@ public class ShowBarrier implements BorderShower {
      */
     @Override
     public void showBorder(Player player) {
-
+        if (!addon.inWorld(player.getWorld())) {
+            // If the player is not in a world governed by this addon, skip
+            return;
+        }
+        //BentoBox.getInstance().logDebug("showing barrier border for " + player.getName());
         if (!Objects.requireNonNull(User.getInstance(player)).getMetaData(BORDER_STATE_META_DATA).map(MetaDataValue::asBoolean).orElse(true)) {
             return;
         }

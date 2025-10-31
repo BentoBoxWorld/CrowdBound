@@ -1,4 +1,5 @@
 # CrowdBound Configuration ${version}
+# CrowdBound Configuration 0.0.3-SNAPSHOT-LOCAL
 crowdbound:
   command:
     # Player Command. What command users will run to access their claim.
@@ -24,12 +25,18 @@ world:
   generator:
     # World seed.
     # /!\ BentoBox currently does not support changing this value mid-game. If you do need to change it, do a full reset of your databases and worlds.
-    seed: 602103456450
+    seed: 604503458450
   # World difficulty setting - PEACEFUL, EASY, NORMAL, HARD
   # Other plugins may override this setting
   difficulty: NORMAL
+  # Disable world border
+  # Set to true to disable the worldborder feature.
+  disable-worldborder: true
+  # Use manual world border sizing
+  # Set to true to overide the automatic world border sizing based on the number of online players.
+  manual-border-size: false
   # Minimum claim distance from spawn in blocks.
-  minimum distance: 32
+  minimum-distance: 64
   # Global border size increase per online player in blocks.
   barrier-increase-blocks: 320
   # Global border reduction speed. How fast the global border will shrink if it needs to do so.
@@ -79,6 +86,15 @@ world:
     # Note that with a standard nether all players arrive at the same portal and entering a
     # portal will return them back to their areas.
     generate: true
+    upsidedown:
+      # Make the UpsideDown nether - this is a nether that mirrors the overworld
+      generate: true
+      # Level of destruction of UpsideDown nether in %. Default is 5%.
+      # The UpsideDown is not pretty like the overworld...
+      attrition: 5
+      # Maximum number of chests to fill in a chunk. Default is 1.
+      # Chests get filled with random nether loot
+      chest-fills: 1
     # This option indicates if nether portals should be linked via dimensions.
     # Option will simulate vanilla portal mechanics that links portals together
     # or creates a new portal, if there is not a portal in that dimension.
@@ -176,6 +192,7 @@ world:
     BREEDING: true
     HURT_VILLAGERS: true
     WITHER_DAMAGE: false
+    FARMER_DANCE: false
     TURTLE_EGGS: true
     BREAK_SPAWNERS: true
     ELYTRA: true
@@ -206,6 +223,7 @@ world:
     MILKING: true
     DISPENSER: true
     GATE: true
+    ALLOW_MOVE_BOX: true
     CHORUS_FRUIT: true
     CONTAINER: true
     ITEM_FRAME_DAMAGE: true
@@ -230,11 +248,11 @@ world:
     HARVEST: 200
     FROST_WALKER: 200
     LEAF_DECAY: 200
-    COLLECT_LAVA: 200
     ENDERMAN_TELEPORT: 200
+    COLLECT_LAVA: 200
     LEVER: 200
-    HURT_MONSTERS: 200
     CAKE: 200
+    HURT_MONSTERS: 200
     FIRE_SPREAD: 200
     CHANGE_SETTINGS: 1000
     SIGN_EDITING: 200
@@ -262,13 +280,13 @@ world:
     ITEM_FRAME: 200
     CROP_PLANTING: 200
     CRAFTING: 200
-    SHEARING: 200
-    ENCHANTING: 200
-    BLOCK_EXPLODE_DAMAGE: 200
     ANIMAL_SPAWNERS_SPAWN: 200
+    BLOCK_EXPLODE_DAMAGE: 200
+    ENCHANTING: 200
+    SHEARING: 200
     BOAT: 200
-    SPAWN_EGGS: 200
     BED: 200
+    SPAWN_EGGS: 200
     MONSTER_NATURAL_SPAWN: 200
     SCULK_SHRIEKER: 200
     SMITHING: 200
@@ -291,16 +309,16 @@ world:
     FURNACE: 200
     MONSTER_SPAWNERS_SPAWN: 200
     MINECART: 200
-    FIRE_IGNITE: 200
     FISH_SCOOPING: 200
+    FIRE_IGNITE: 200
     END_PORTAL: 200
     BREEDING: 200
     HURT_VILLAGERS: 200
     TURTLE_EGGS: 200
     BREAK_SPAWNERS: 200
     RIDING: 200
-    NAME_TAG: 200
     ARMOR_STAND: 200
+    NAME_TAG: 200
     ITEM_DROP: 200
     NOTE_BLOCK: 200
     NETHER_PORTAL: 200
@@ -336,14 +354,14 @@ world:
   # if the PREVENT_TELEPORT_WHEN_FALLING world setting flag is active
   falling-banned-commands: []
 claim:
-  # Max radius of a single player claim. This is the largest it can grow to.
-  # It is the same for every dimension : Overworld, Nether and End.
-  max-size: 32
+  # Size of a single player claim.
+  # A claim exists every dimension : Overworld, Nether and End.
+  size: 32
   # Default max team size
   # Permission size cannot be less than the default below. 
   max-team-size: 4
   # Claim size bonus in bocks for each team member
-  member-bonus: 40
+  member-bonus: 32
   # Default maximum number of coop rank members per area
   # Players can have the crowdbound.coop.maxsize.<number> permission to be bigger but
   # permission size cannot be less than the default below. 

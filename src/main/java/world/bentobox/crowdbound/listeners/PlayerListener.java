@@ -32,6 +32,7 @@ import org.bukkit.util.NumberConversions;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.events.island.IslandProtectionRangeChangeEvent;
 import world.bentobox.bentobox.api.flags.Flag;
 import world.bentobox.bentobox.api.metadata.MetaDataValue;
@@ -322,7 +323,9 @@ public class PlayerListener implements Listener {
         // Hide and show again
         e.getIsland().getPlayersOnIsland().forEach(player -> {
             if (isOn(player)) {
+                //BentoBox.getInstance().logDebug("Hiding for "+ player.getName());
                 show.hideBorder(User.getInstance(player));
+                //BentoBox.getInstance().logDebug("Showing for "+ player.getName());
                 show.showBorder(player);
             }
         });

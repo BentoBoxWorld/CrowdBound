@@ -274,14 +274,14 @@ public class CrowdBound extends GameModeAddon {
             }
             // Trigger gradual reduction of border
            task =  Bukkit.getScheduler().runTaskTimer(getPlugin(), () -> {
-               BentoBox.getInstance().logDebug("Get border size = " + newBorderSize + " old = " + borderSize);
+               //BentoBox.getInstance().logDebug("Get border size = " + newBorderSize + " old = " + borderSize);
                 if (borderSize > newBorderSize) {
                     borderSize--;
                     // Update the border for any online players
                     Bukkit.getOnlinePlayers().stream().filter(p -> inWorld(p.getWorld())).forEach(borderShower::showBorder);
                 } else {
                     // We are done
-                    BentoBox.getInstance().logDebug("canceled");
+                    //BentoBox.getInstance().logDebug("canceled");
                     task.cancel();
                 }
             }, this.getSettings().getBarrierReductionSpeed() * 20L, this.getSettings().getBarrierReductionSpeed() * 20L);

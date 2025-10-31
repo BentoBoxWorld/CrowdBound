@@ -52,6 +52,10 @@ public class TeamListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onTeamJoin(TeamJoinedEvent e) {
+        if (e.getIsland().getMemberSet().size() == 1) {
+            // New claim
+            return;
+        }
         resize(e.getIsland());
     }
     
@@ -69,11 +73,18 @@ public class TeamListener implements Listener {
         if (addon.inWorld(claim.getWorld())) {
             // In our world
             // Resize this claim
-            int size = addon.getSettings().getMemberBonus() * claim.getMemberSet().size();
+            int size = addon.getSettings().getIslandDistance() + addon.getSettings().getMemberBonus() * (claim.getMemberSet().size()-1);
             int oldSize = claim.getProtectionRange();
+            
+            // TODO: check if new size overlaps any current claims and shrink down if needed
+            
             // Set to size of team
             claim.setRange(size);
+            // Update grid
+            addon.getPlugin().getIslands().getIslandCache().getIslandGrid(claim.getWorld()).removeFromGrid(claim);
+            addon.getPlugin().getIslands().getIslandCache().getIslandGrid(claim.getWorld()).addToGrid(claim);
             claim.setProtectionRange(size); // This should trigger an update to the border viewed via the event
+
             if (size == oldSize) {
                 return;
             }
