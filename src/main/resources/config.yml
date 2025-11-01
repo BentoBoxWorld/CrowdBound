@@ -1,5 +1,4 @@
 # CrowdBound Configuration ${version}
-# CrowdBound Configuration 0.0.3-SNAPSHOT-LOCAL
 crowdbound:
   command:
     # Player Command. What command users will run to access their claim.
@@ -35,15 +34,20 @@ world:
   # Use manual world border sizing
   # Set to true to overide the automatic world border sizing based on the number of online players.
   manual-border-size: false
-  # Minimum claim distance from spawn in blocks.
-  minimum-distance: 64
   # Global border size increase per online player in blocks.
   barrier-increase-blocks: 320
   # Global border reduction speed. How fast the global border will shrink if it needs to do so.
   # Per block reduction time in seconds.
   barrier-reduction-speed: 10
-  # Allow structures to generate in the seed world
+  # Allow structures to generate
   allow-structures: true
+  # Maximum number of claims in the world. Set to -1 or 0 for unlimited.
+  max-claims: -1
+  # The number of concurrent claims a player can have
+  # A value of 0 will use the BentoBox config.yml default
+  concurrent-claims: 3
+  # Disallow team members from having their own claim.
+  disallow-team-member-claims: true
   spawn-limits:
     # Spawn limits. These override the limits set in bukkit.yml
     # If set to a negative number, the server defaults will be used
@@ -57,34 +61,12 @@ world:
     # Setting to 0 will disable monster spawns, but this is not recommended. Minecraft default is 400.
     # A negative value uses the server default
     ticks-per-monster-spawns: -1
-  # Start to place players at these coordinates. This is where players will start in the
-  # world. This must be a multiple of your area radius, but the plugin will auto
-  # calculate the closest location on the grid. Players are placed around this location
-  # in a spiral manner.
-  # If none of this makes sense, leave it at 0,0.
-  start-x: 0
-  start-z: 0
-  # Maximum number of player areas in the world. Set to -1 or 0 for unlimited.
-  # If the number of areas is greater than this number, it will stop players from joining the world.
-  max-areas: -1
-  # The number of concurrent areas a player can have
-  # A value of 0 will use the BentoBox config.yml default
-  concurrent-area: 5
-  # Disallow team members from having their own claim.
-  disallow-team-member-areas: false
-  # Area height
-  # It is the y coordinate of the bedrock block in the blueprint.
-  area-height: -64
   # The maximum number of players a player can ban at any one time in this game mode.
   # The permission crowdbound.ban.maxlimit.X where X is a number can also be used per player
   # -1 = unlimited
   ban-limit: -1
   nether:
-    # Generate Nether - if this is false, the nether world will not be made and access to
-    # the nether will not occur. Other plugins may still enable portal usage.
-    # Note: Some default challenges will not be possible if there is no nether.
-    # Note that with a standard nether all players arrive at the same portal and entering a
-    # portal will return them back to their areas.
+    # Generate Nether - if this is false, the nether world will not be made.
     generate: true
     upsidedown:
       # Make the UpsideDown nether - this is a nether that mirrors the overworld
@@ -95,16 +77,11 @@ world:
       # Maximum number of chests to fill in a chunk. Default is 1.
       # Chests get filled with random nether loot
       chest-fills: 1
-    # This option indicates if nether portals should be linked via dimensions.
-    # Option will simulate vanilla portal mechanics that links portals together
-    # or creates a new portal, if there is not a portal in that dimension.
-    # Added since 1.0.3.
-    create-and-link-portals: true
   end:
     # End World - if this is false, the end world will not be made and access to
     # the end will not occur. Other plugins may still enable portal usage.
     generate: true
-  # Mob white list - these mobs will NOT be removed when logging in or doing /crowdbound
+  # Mob white list - these mobs will NOT be removed when player's log in or go to their claim
   remove-mobs-whitelist: []
   # World flags. These are boolean settings for various flags for this world
   flags:
@@ -203,6 +180,7 @@ world:
     ENDERMAN_GRIEFING: true
     ITEM_DROP: true
     NOTE_BLOCK: true
+    START_SAFETY: false
     NETHER_PORTAL: true
     REMOVE_END_EXIT_ISLAND: true
     LECTERN: true
@@ -230,8 +208,8 @@ world:
     BARREL: true
     COLLECT_POWDERED_SNOW: true
     CARTOGRAPHY: true
-  # These are the default protection settings for new areas.
-  # The value is the minimum area rank required allowed to do the action
+  # These are the default protection settings for new claim.
+  # The value is the minimum claim rank required allowed to do the action
   # Ranks are the following:
   #   VISITOR   = 0
   #   COOP      = 200
@@ -239,7 +217,7 @@ world:
   #   MEMBER    = 500
   #   SUB-OWNER = 900
   #   OWNER     = 1000
-  default-area-flags:
+  default-claim-flags:
     DRAGON_EGG: 500
     HURT_TAMED_ANIMALS: 500
     ANVIL: 200
@@ -248,11 +226,11 @@ world:
     HARVEST: 200
     FROST_WALKER: 200
     LEAF_DECAY: 200
-    ENDERMAN_TELEPORT: 200
     COLLECT_LAVA: 200
+    ENDERMAN_TELEPORT: 200
     LEVER: 200
-    CAKE: 200
     HURT_MONSTERS: 200
+    CAKE: 200
     FIRE_SPREAD: 200
     CHANGE_SETTINGS: 1000
     SIGN_EDITING: 200
@@ -269,8 +247,8 @@ world:
     AXOLOTL_SCOOPING: 200
     ANIMAL_NATURAL_SPAWN: 200
     SHULKER_TELEPORT: 200
-    BUTTON: 200
     COMPOSTER: 200
+    BUTTON: 200
     COMMAND_RANKS: 200
     CRAFTER: 200
     TRAPDOOR: 200
@@ -280,10 +258,10 @@ world:
     ITEM_FRAME: 200
     CROP_PLANTING: 200
     CRAFTING: 200
-    ANIMAL_SPAWNERS_SPAWN: 200
-    BLOCK_EXPLODE_DAMAGE: 200
-    ENCHANTING: 200
     SHEARING: 200
+    ANIMAL_SPAWNERS_SPAWN: 200
+    ENCHANTING: 200
+    BLOCK_EXPLODE_DAMAGE: 200
     BOAT: 200
     BED: 200
     SPAWN_EGGS: 200
@@ -309,8 +287,8 @@ world:
     FURNACE: 200
     MONSTER_SPAWNERS_SPAWN: 200
     MINECART: 200
-    FISH_SCOOPING: 200
     FIRE_IGNITE: 200
+    FISH_SCOOPING: 200
     END_PORTAL: 200
     BREEDING: 200
     HURT_VILLAGERS: 200
@@ -323,8 +301,8 @@ world:
     NOTE_BLOCK: 200
     NETHER_PORTAL: 200
     LECTERN: 200
-    SHULKER_BOX: 200
     GRINDSTONE: 200
+    SHULKER_BOX: 200
     ITEM_PICKUP: 200
     BREWING: 200
     STONECUTTING: 200
@@ -341,133 +319,62 @@ world:
     CHORUS_FRUIT: 200
     CONTAINER: 200
     BARREL: 200
-    CARTOGRAPHY: 200
     COLLECT_POWDERED_SNOW: 200
-  # These are the default settings for new areas
-  default-area-settings: {}
+    CARTOGRAPHY: 200
+  # These are the default settings for new claims
+  default-claim-settings: {}
   # These settings/flags are hidden from users
   # Ops can toggle hiding in-game using SHIFT-LEFT-CLICK on flags in settings
-  hidden-flags: []
-  # Visitor banned commands - Visitors to areas cannot use these commands in this world
+  hidden-flags:
+  - BUCKET
+  - BREAK_HOPPERS
+  - BREAK_SPAWNERS
+  - DRAGON_EGG
+  - ONEBLOCK_BOSSBAR
+  - PVP_END
+  - PVP_NETHER
+  - PVP_OVERWORLD
+  - SHULKER_TELEPORT
+  - TNT_DAMAGE
+  - ENDERMAN_TELEPORT
+  - FIRE_BURNING
+  - FIRE_IGNITE
+  - BLOCK_EXPLODE_DAMAGE
+  - ANIMAL_SPAWNERS_SPAWN
+  - ANIMAL_NATURAL_SPAWN
+  - FIRE_SPREAD
+  - LEAF_DECAY
+  - MONSTER_NATURAL_SPAWN
+  - MONSTER_SPAWNERS_SPAWN
+  # Visitor banned commands - Visitors to claims cannot use these commands in this world
   visitor-banned-commands: []
-  # Falling banned commands - players cannot use these commands when falling
-  # if the PREVENT_TELEPORT_WHEN_FALLING world setting flag is active
-  falling-banned-commands: []
 claim:
   # Size of a single player claim.
   # A claim exists every dimension : Overworld, Nether and End.
   size: 32
   # Default max team size
+  # Team members can increase the size of the claim.
   # Permission size cannot be less than the default below. 
   max-team-size: 4
   # Claim size bonus in bocks for each team member
   member-bonus: 32
-  # Default maximum number of coop rank members per area
+  # Default maximum number of coop rank members per claim.
+  # Coop members loose status when they logoff or their inviter logs off.
+  # Coop members do not increase the size of the claim.
   # Players can have the crowdbound.coop.maxsize.<number> permission to be bigger but
   # permission size cannot be less than the default below. 
   max-coop-size: 4
-  # Default maximum number of trusted rank members per area
+  # Default maximum number of trusted rank members per claim.
+  # Trusted members retain the status continuously.
+  # Trusted members do not increase the size of the claim.
   # Players can have the crowdbound.trust.maxsize.<number> permission to be bigger but
   # permission size cannot be less than the default below. 
   max-trusted-size: 4
-  # Default maximum number of homes a player can have. Min = 1
+  # Default maximum number of home teleports a player can have. Min = 1
   # Accessed via /is sethome <number> or /is go <number>
   max-homes: 5
-  reset:
-    # How many resets a player is allowed (manage with /boxadmin reset add/remove/reset/set command)
-    # Value of -1 means unlimited, 0 means hardcore - no resets.
-    # Example, 2 resets means they get 2 resets or 3 areas lifetime
-    reset-limit: -1
-    # Kicked or leaving players lose resets
-    # Players who leave a team will lose an area reset chance
-    # If a player has zero resets left and leaves a team, they cannot make a new
-    # area by themselves and can only join a team.
-    # Leave this true to avoid players exploiting free areas
-    leavers-lose-reset: false
-    # Allow kicked players to keep their inventory.
-    # Overrides the on-leave inventory reset for kicked players.
-    kicked-keep-inventory: false
-    on-join:
-      # What the addon should reset when the player joins or creates an area
-      # Reset Money - if this is true, will reset the player's money to the starting money
-      # Recommendation is that this is set to true, but if you run multi-worlds
-      # make sure your economy handles multi-worlds too.
-      money: false
-      # Reset inventory - if true, the player's inventory will be cleared.
-      # Note: if you have MultiInv running or a similar inventory control plugin, that
-      # plugin may still reset the inventory when the world changes.
-      inventory: false
-      # Reset health - if true, the player's health will be reset.
-      health: true
-      # Reset hunger - if true, the player's hunger will be reset.
-      hunger: true
-      # Reset experience points - if true, the player's experience will be reset.
-      exp: false
-      # Reset Ender Chest - if true, the player's Ender Chest will be cleared.
-      ender-chest: false
-      # Reset advancements.
-      reset-advancements: true
-      # Grant these advancements
-      grant-advancements: []
-    on-leave:
-      # What the plugin should reset when the player leaves or is kicked from an area
-      # Reset Money - if this is true, will reset the player's money to the starting money
-      # Recommendation is that this is set to true, but if you run multi-worlds
-      # make sure your economy handles multi-worlds too.
-      money: false
-      # Reset inventory - if true, the player's inventory will be cleared.
-      # Note: if you have MultiInv running or a similar inventory control plugin, that
-      # plugin may still reset the inventory when the world changes.
-      inventory: false
-      # Reset health - if true, the player's health will be reset.
-      health: false
-      # Reset hunger - if true, the player's hunger will be reset.
-      hunger: false
-      # Reset experience - if true, the player's experience will be reset.
-      exp: false
-      # Reset Ender Chest - if true, the player's Ender Chest will be cleared.
-      ender-chest: false
-      # Reset advancements.
-      reset-advancements: false
-      # Grant these advancements
-      grant-advancements: []
-  create-area-on-first-login:
-    # Toggles the automatic area creation upon the player's first login on your server.
-    # If set to true,
-    #    * Upon connecting to your server for the first time, the player will be told that
-    #     an area will be created for him.
-    #   * Make sure you have a Blueprint Bundle called "default": this is the one that will
-    #     be used to create the claim.
-    #   * An area will be created for the player without needing him to run the create command.
-    # If set to false, this will disable this feature entirely.
-    # Warning:
-    #   * If you are running multiple gamemodes on your server, and all of them have
-    #     this feature enabled, an area in all the gamemodes will be created simultaneously.
-    #     However, it is impossible to know on which area the player will be teleported to afterwards.
-    #   * Island creation can be resource-intensive, please consider the options below to help mitigate
-    #     the potential issues, especially if you expect a lot of players to connect to your server
-    #     in a limited period of time.
-    enable: false
-    # Time in seconds after the player logged in, before his area gets created.
-    # If set to 0 or less, the area will be created directly upon the player's login.
-    # It is recommended to keep this value under a minute's time.
-    delay: 5
-    # Toggles whether the area creation should be aborted if the player logged off while the
-    # delay (see the option above) has not worn off yet.
-    # If set to true,
-    #   * If the player has logged off the server while the delay (see the option above) has not
-    #     worn off yet, this will cancel the area creation.
-    #   * If the player relogs afterward, since he will not be recognized as a new player, no area
-    #     would be created for him.
-    #   * If the area creation started before the player logged off, it will continue.
-    # If set to false, the player's area will be created even if he went offline in the meantime.
-    # Note this option has no effect if the delay (see the option above) is set to 0 or less.
-    abort-on-logout: true
-  # Toggles whether the player should be teleported automatically to his area when it is created.
-  # If set to false, the player will be told his area is ready but will have to teleport to his area using the command.
-  teleport-player-to-area-when-created: true
   commands:
-    # List of commands to run when a player joins an area or creates one.
+    # List of commands to run when a player joins an claim or creates one.
     # These commands are run by the console, unless otherwise stated using the [SUDO] prefix,
     # in which case they are executed by the player.
     # 
@@ -476,9 +383,9 @@ claim:
     # 
     # Here are some examples of valid commands to execute:
     #    * "[SUDO] bbox version"
-    #    * "boxadmin deaths set [player] 0"
+    #    * "give [player] stick 1"
     on-join: []
-    # List of commands to run when a player leaves an area, resets his area or gets kicked from it.
+    # List of commands to run when a player leaves a claim or gets kicked from it.
     # These commands are run by the console, unless otherwise stated using the [SUDO] prefix,
     # in which case they are executed by the player.
     # 
@@ -487,7 +394,7 @@ claim:
     # 
     # Here are some examples of valid commands to execute:
     #    * '[SUDO] bbox version'
-    #    * 'boxadmin deaths set [player] 0'
+    #    * 'give [player] stick 1'
     # 
     # Note that player-executed commands might not work, as these commands can be run with said player being offline.
     on-leave: []
@@ -500,10 +407,9 @@ claim:
     # 
     # Here are some examples of valid commands to execute:
     #    * '[SUDO] bbox version'
-    #    * 'bsbadmin deaths set [player] 0'
+    #    * 'give [player] stick 1'
     # 
     # Note that player-executed commands might not work, as these commands can be run with said player being offline.
-    # Added since 1.14.0.
     on-respawn: []
   sethome:
     nether:
@@ -514,21 +420,9 @@ claim:
       # Allow setting home in the end.
       allow: true
       require-confirmation: true
-  deaths:
-    # Whether deaths are counted or not.
-    counted: true
-    # Maximum number of deaths to count. The death count can be used by add-ons.
-    max: 10
-    # When a player joins a team, reset their death count
-    team-join-reset: true
-    # Reset player death count when they start a new area or reset an area
-    reset-on-new-area: true
 protection:
-  # Geo restrict mobs.
-  # Mobs that exit the area space where they were spawned will be removed.
-  geo-limit-settings: []
   # Blocked mobs.
-  # List of mobs that should not spawn in Boxed.
+  # List of mobs that should not spawn.
   block-mobs: []
   # Invincible visitors. List of damages that will not affect visitors.
   # Make list blank if visitors should receive all damages

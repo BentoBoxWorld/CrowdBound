@@ -1,7 +1,6 @@
 package world.bentobox.crowdbound.commands.player;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import org.bukkit.Location;
@@ -29,13 +28,6 @@ public class ClaimLocationStrategy implements NewIslandLocationStrategy {
             return null;
         }
         Location location = user.getLocation();
-        int distance = addon.getSettings().getMinimumClaimDistance();
-        // Check for distance from spawn
-        Location spawn = Objects.requireNonNullElse(plugin.getIslands().getSpawnPoint(world), world.getSpawnLocation());
-        if (Math.abs(location.getX() - spawn.getX()) < distance || Math.abs(location.getZ() - spawn.getZ()) < distance) {
-            user.sendMessage("crowdbound.errors.too-close-to-spawn");
-            return null;
-        }
         // Quick check using the claim grid cache.
         if (plugin.getIslands().isIslandAt(location)) {
             user.sendMessage("crowdbound.errors.already-claimed");

@@ -1,6 +1,7 @@
 package world.bentobox.crowdbound;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,11 +82,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("Set to true to overide the automatic world border sizing based on the number of online players.")
     @ConfigEntry(path = "world.manual-border-size")
     private boolean manualBorderSize = false;
-    
-    @ConfigComment("Minimum claim distance from spawn in blocks.")
-    @ConfigEntry(path = "world.minimum-distance")
-    private int minimumClaimDistance = 320;
-    
+        
     @ConfigComment("Global border size increase per online player in blocks.")
     @ConfigEntry(path = "world.barrier-increase-blocks")
     private int barrierIncreaseBlocks = 160;
@@ -95,9 +92,22 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.barrier-reduction-speed")
     private int barrierReductionSpeed = 10;
     
-    @ConfigComment("Allow structures to generate in the seed world")
+    @ConfigComment("Allow structures to generate")
     @ConfigEntry(path = "world.allow-structures")
     private boolean allowStructures = true;
+    
+    @ConfigComment("Maximum number of claims in the world. Set to -1 or 0 for unlimited.")
+    @ConfigEntry(path = "world.max-claims")
+    private int maxIslands = -1;
+
+    @ConfigComment("The number of concurrent claims a player can have")
+    @ConfigComment("A value of 0 will use the BentoBox config.yml default")
+    @ConfigEntry(path = "world.concurrent-claims")
+    private int concurrentIslands = 3;
+
+    @ConfigComment("Disallow team members from having their own claim.")
+    @ConfigEntry(path = "world.disallow-team-member-claims")
+    private boolean disallowTeamMemberIslands = true;
 
     @ConfigComment("Spawn limits. These override the limits set in bukkit.yml")
     @ConfigComment("If set to a negative number, the server defaults will be used")
@@ -118,36 +128,6 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.spawn-limits.ticks-per-monster-spawns")
     private int ticksPerMonsterSpawns = -1;
 
-    @ConfigComment("Start to place players at these coordinates. This is where players will start in the")
-    @ConfigComment("world. This must be a multiple of your area radius, but the plugin will auto")
-    @ConfigComment("calculate the closest location on the grid. Players are placed around this location")
-    @ConfigComment("in a spiral manner.")
-    @ConfigComment("If none of this makes sense, leave it at 0,0.")
-    @ConfigEntry(path = "world.start-x")
-    private int islandStartX = 0;
-
-    @ConfigEntry(path = "world.start-z")
-    private int islandStartZ = 0;
-
-    @ConfigComment("Maximum number of player areas in the world. Set to -1 or 0 for unlimited.")
-    @ConfigComment("If the number of areas is greater than this number, it will stop players from joining the world.")
-    @ConfigEntry(path = "world.max-areas")
-    private int maxIslands = -1;
-
-    @ConfigComment("The number of concurrent areas a player can have")
-    @ConfigComment("A value of 0 will use the BentoBox config.yml default")
-    @ConfigEntry(path = "world.concurrent-area")
-    private int concurrentIslands = 0;
-
-    @ConfigComment("Disallow team members from having their own claim.")
-    @ConfigEntry(path = "world.disallow-team-member-areas")
-    private boolean disallowTeamMemberIslands = true;
-
-    @ConfigComment("Area height")
-    @ConfigComment("It is the y coordinate of the bedrock block in the blueprint.")
-    @ConfigEntry(path = "world.area-height")
-    private int islandHeight = -64;
-
     @ConfigComment("The maximum number of players a player can ban at any one time in this game mode.")
     @ConfigComment("The permission crowdbound.ban.maxlimit.X where X is a number can also be used per player")
     @ConfigComment("-1 = unlimited")
@@ -155,11 +135,7 @@ public class Settings implements WorldSettings {
     private int banLimit = -1;
 
     // Nether
-    @ConfigComment("Generate Nether - if this is false, the nether world will not be made and access to")
-    @ConfigComment("the nether will not occur. Other plugins may still enable portal usage.")
-    @ConfigComment("Note: Some default challenges will not be possible if there is no nether.")
-    @ConfigComment("Note that with a standard nether all players arrive at the same portal and entering a")
-    @ConfigComment("portal will return them back to their areas.")
+    @ConfigComment("Generate Nether - if this is false, the nether world will not be made.")
     @ConfigEntry(path = "world.nether.generate")
     private boolean netherGenerate = true;
     
@@ -171,16 +147,11 @@ public class Settings implements WorldSettings {
     @ConfigComment("The UpsideDown is not pretty like the overworld...")
     @ConfigEntry(path = "world.nether.upsidedown.attrition")
     private int attrition = 5;
+    
     @ConfigComment("Maximum number of chests to fill in a chunk. Default is 1.")
     @ConfigComment("Chests get filled with random nether loot")
     @ConfigEntry(path = "world.nether.upsidedown.chest-fills")
     private int chestFills = 1;
-
-    @ConfigComment("This option indicates if nether portals should be linked via dimensions.")
-    @ConfigComment("Option will simulate vanilla portal mechanics that links portals together")
-    @ConfigComment("or creates a new portal, if there is not a portal in that dimension.")
-    @ConfigEntry(path = "world.nether.create-and-link-portals", since = "1.0.3")
-    private boolean makeNetherPortals = false;
 
     // End
     @ConfigComment("End World - if this is false, the end world will not be made and access to")
@@ -188,7 +159,7 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.end.generate")
     private boolean endGenerate = true;
 
-    @ConfigComment("Mob white list - these mobs will NOT be removed when logging in or doing /crowdbound")
+    @ConfigComment("Mob white list - these mobs will NOT be removed when player's log in or go to their claim")
     @ConfigEntry(path = "world.remove-mobs-whitelist")
     private Set<EntityType> removeMobsWhitelist = new HashSet<>();
 
@@ -196,8 +167,8 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.flags")
     private Map<String, Boolean> worldFlags = new HashMap<>();
 
-    @ConfigComment("These are the default protection settings for new areas.")
-    @ConfigComment("The value is the minimum area rank required allowed to do the action")
+    @ConfigComment("These are the default protection settings for new claim.")
+    @ConfigComment("The value is the minimum claim rank required allowed to do the action")
     @ConfigComment("Ranks are the following:")
     @ConfigComment("  VISITOR   = 0")
     @ConfigComment("  COOP      = 200")
@@ -205,12 +176,12 @@ public class Settings implements WorldSettings {
     @ConfigComment("  MEMBER    = 500")
     @ConfigComment("  SUB-OWNER = 900")
     @ConfigComment("  OWNER     = 1000")
-    @ConfigEntry(path = "world.default-area-flags")
+    @ConfigEntry(path = "world.default-claim-flags")
     @Adapter(FlagSerializer.class)
     private Map<Flag, Integer> defaultIslandFlags = new HashMap<>();
 
-    @ConfigComment("These are the default settings for new areas")
-    @ConfigEntry(path = "world.default-area-settings")
+    @ConfigComment("These are the default settings for new claims")
+    @ConfigEntry(path = "world.default-claim-settings")
     @Adapter(FlagSerializer2.class)
     private Map<Flag, Integer> defaultIslandSettings = new HashMap<>();
 
@@ -219,14 +190,9 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.hidden-flags")
     private List<String> hiddenFlags = new ArrayList<>();
 
-    @ConfigComment("Visitor banned commands - Visitors to areas cannot use these commands in this world")
+    @ConfigComment("Visitor banned commands - Visitors to claims cannot use these commands in this world")
     @ConfigEntry(path = "world.visitor-banned-commands")
     private List<String> visitorBannedCommands = new ArrayList<>();
-
-    @ConfigComment("Falling banned commands - players cannot use these commands when falling")
-    @ConfigComment("if the PREVENT_TELEPORT_WHEN_FALLING world setting flag is active")
-    @ConfigEntry(path = "world.falling-banned-commands")
-    private List<String> fallingBannedCommands = new ArrayList<>();
 
     // ---------------------------------------------
 
@@ -234,173 +200,41 @@ public class Settings implements WorldSettings {
     @ConfigComment("Size of a single player claim.")
     @ConfigComment("A claim exists every dimension : Overworld, Nether and End.")
     @ConfigEntry(path = "claim.size")
-    private int islandDistance = 96;
+    private int islandDistance = 32;
 
     @ConfigComment("Default max team size")
+    @ConfigComment("Team members can increase the size of the claim.")
     @ConfigComment("Permission size cannot be less than the default below. ")
     @ConfigEntry(path = "claim.max-team-size")
     private int maxTeamSize = 4;
     
     @ConfigComment("Claim size bonus in bocks for each team member")
     @ConfigEntry(path = "claim.member-bonus")
-    private int memberBonus = 40;
+    private int memberBonus = 32;
 
-    @ConfigComment("Default maximum number of coop rank members per area")
+    @ConfigComment("Default maximum number of coop rank members per claim.")
+    @ConfigComment("Coop members loose status when they logoff or their inviter logs off.")
+    @ConfigComment("Coop members do not increase the size of the claim.")
     @ConfigComment("Players can have the crowdbound.coop.maxsize.<number> permission to be bigger but")
     @ConfigComment("permission size cannot be less than the default below. ")
     @ConfigEntry(path = "claim.max-coop-size")
     private int maxCoopSize = 4;
 
-    @ConfigComment("Default maximum number of trusted rank members per area")
+    @ConfigComment("Default maximum number of trusted rank members per claim.")
+    @ConfigComment("Trusted members retain the status continuously.")
+    @ConfigComment("Trusted members do not increase the size of the claim.")
     @ConfigComment("Players can have the crowdbound.trust.maxsize.<number> permission to be bigger but")
     @ConfigComment("permission size cannot be less than the default below. ")
     @ConfigEntry(path = "claim.max-trusted-size")
     private int maxTrustSize = 4;
 
-    @ConfigComment("Default maximum number of homes a player can have. Min = 1")
+    @ConfigComment("Default maximum number of home teleports a player can have. Min = 1")
     @ConfigComment("Accessed via /is sethome <number> or /is go <number>")
     @ConfigEntry(path = "claim.max-homes")
     private int maxHomes = 5;
 
-    // Reset
-    @ConfigComment("How many resets a player is allowed (manage with /boxadmin reset add/remove/reset/set command)")
-    @ConfigComment("Value of -1 means unlimited, 0 means hardcore - no resets.")
-    @ConfigComment("Example, 2 resets means they get 2 resets or 3 areas lifetime")
-    @ConfigEntry(path = "claim.reset.reset-limit")
-    private int resetLimit = -1;
-
-    @ConfigComment("Kicked or leaving players lose resets")
-    @ConfigComment("Players who leave a team will lose an area reset chance")
-    @ConfigComment("If a player has zero resets left and leaves a team, they cannot make a new")
-    @ConfigComment("area by themselves and can only join a team.")
-    @ConfigComment("Leave this true to avoid players exploiting free areas")
-    @ConfigEntry(path = "claim.reset.leavers-lose-reset")
-    private boolean leaversLoseReset = false;
-
-    @ConfigComment("Allow kicked players to keep their inventory.")
-    @ConfigComment("Overrides the on-leave inventory reset for kicked players.")
-    @ConfigEntry(path = "claim.reset.kicked-keep-inventory")
-    private boolean kickedKeepInventory = false;
-
-    @ConfigComment("What the addon should reset when the player joins or creates an area")
-    @ConfigComment("Reset Money - if this is true, will reset the player's money to the starting money")
-    @ConfigComment("Recommendation is that this is set to true, but if you run multi-worlds")
-    @ConfigComment("make sure your economy handles multi-worlds too.")
-    @ConfigEntry(path = "claim.reset.on-join.money")
-    private boolean onJoinResetMoney = false;
-
-    @ConfigComment("Reset inventory - if true, the player's inventory will be cleared.")
-    @ConfigComment("Note: if you have MultiInv running or a similar inventory control plugin, that")
-    @ConfigComment("plugin may still reset the inventory when the world changes.")
-    @ConfigEntry(path = "claim.reset.on-join.inventory")
-    private boolean onJoinResetInventory = false;
-
-    @ConfigComment("Reset health - if true, the player's health will be reset.")
-    @ConfigEntry(path = "claim.reset.on-join.health")
-    private boolean onJoinResetHealth = true;
-
-    @ConfigComment("Reset hunger - if true, the player's hunger will be reset.")
-    @ConfigEntry(path = "claim.reset.on-join.hunger")
-    private boolean onJoinResetHunger = true;
-
-    @ConfigComment("Reset experience points - if true, the player's experience will be reset.")
-    @ConfigEntry(path = "claim.reset.on-join.exp")
-    private boolean onJoinResetXP = false;
-
-
-    @ConfigComment("Reset Ender Chest - if true, the player's Ender Chest will be cleared.")
-    @ConfigEntry(path = "claim.reset.on-join.ender-chest")
-    private boolean onJoinResetEnderChest = false;
-
-    @ConfigComment("Reset advancements.")
-    @ConfigEntry(path = "claim.reset.on-join.reset-advancements")
-    private boolean onJoinResetAdvancements = true;
-
-    @ConfigComment("Grant these advancements")
-    @ConfigEntry(path = "claim.reset.on-join.grant-advancements")
-    private List<String> onJoinGrantAdvancements = new ArrayList<>();
-
-    @ConfigComment("What the plugin should reset when the player leaves or is kicked from an area")
-    @ConfigComment("Reset Money - if this is true, will reset the player's money to the starting money")
-    @ConfigComment("Recommendation is that this is set to true, but if you run multi-worlds")
-    @ConfigComment("make sure your economy handles multi-worlds too.")
-    @ConfigEntry(path = "claim.reset.on-leave.money")
-    private boolean onLeaveResetMoney = false;
-
-    @ConfigComment("Reset inventory - if true, the player's inventory will be cleared.")
-    @ConfigComment("Note: if you have MultiInv running or a similar inventory control plugin, that")
-    @ConfigComment("plugin may still reset the inventory when the world changes.")
-    @ConfigEntry(path = "claim.reset.on-leave.inventory")
-    private boolean onLeaveResetInventory = false;
-
-    @ConfigComment("Reset health - if true, the player's health will be reset.")
-    @ConfigEntry(path = "claim.reset.on-leave.health")
-    private boolean onLeaveResetHealth = false;
-
-    @ConfigComment("Reset hunger - if true, the player's hunger will be reset.")
-    @ConfigEntry(path = "claim.reset.on-leave.hunger")
-    private boolean onLeaveResetHunger = false;
-
-    @ConfigComment("Reset experience - if true, the player's experience will be reset.")
-    @ConfigEntry(path = "claim.reset.on-leave.exp")
-    private boolean onLeaveResetXP = false;
-
-    @ConfigComment("Reset Ender Chest - if true, the player's Ender Chest will be cleared.")
-    @ConfigEntry(path = "claim.reset.on-leave.ender-chest")
-    private boolean onLeaveResetEnderChest = false;
-
-    @ConfigComment("Reset advancements.")
-    @ConfigEntry(path = "claim.reset.on-leave.reset-advancements")
-    private boolean onLeaveResetAdvancements = false;
-
-    @ConfigComment("Grant these advancements")
-    @ConfigEntry(path = "claim.reset.on-leave.grant-advancements")
-    private List<String> onLeaveGrantAdvancements = new ArrayList<>();
-
-    @ConfigComment("Toggles the automatic area creation upon the player's first login on your server.")
-    @ConfigComment("If set to true,")
-    @ConfigComment("   * Upon connecting to your server for the first time, the player will be told that")
-    @ConfigComment("    an area will be created for him.")
-    @ConfigComment("  * Make sure you have a Blueprint Bundle called \"default\": this is the one that will")
-    @ConfigComment("    be used to create the claim.")
-    @ConfigComment("  * An area will be created for the player without needing him to run the create command.")
-    @ConfigComment("If set to false, this will disable this feature entirely.")
-    @ConfigComment("Warning:")
-    @ConfigComment("  * If you are running multiple gamemodes on your server, and all of them have")
-    @ConfigComment("    this feature enabled, an area in all the gamemodes will be created simultaneously.")
-    @ConfigComment("    However, it is impossible to know on which area the player will be teleported to afterwards.")
-    @ConfigComment("  * Island creation can be resource-intensive, please consider the options below to help mitigate")
-    @ConfigComment("    the potential issues, especially if you expect a lot of players to connect to your server")
-    @ConfigComment("    in a limited period of time.")
-    @ConfigEntry(path = "claim.create-area-on-first-login.enable")
-    private boolean createIslandOnFirstLoginEnabled;
-
-    @ConfigComment("Time in seconds after the player logged in, before his area gets created.")
-    @ConfigComment("If set to 0 or less, the area will be created directly upon the player's login.")
-    @ConfigComment("It is recommended to keep this value under a minute's time.")
-    @ConfigEntry(path = "claim.create-area-on-first-login.delay")
-    private int createIslandOnFirstLoginDelay = 5;
-
-    @ConfigComment("Toggles whether the area creation should be aborted if the player logged off while the")
-    @ConfigComment("delay (see the option above) has not worn off yet.")
-    @ConfigComment("If set to true,")
-    @ConfigComment("  * If the player has logged off the server while the delay (see the option above) has not")
-    @ConfigComment("    worn off yet, this will cancel the area creation.")
-    @ConfigComment("  * If the player relogs afterward, since he will not be recognized as a new player, no area")
-    @ConfigComment("    would be created for him.")
-    @ConfigComment("  * If the area creation started before the player logged off, it will continue.")
-    @ConfigComment("If set to false, the player's area will be created even if he went offline in the meantime.")
-    @ConfigComment("Note this option has no effect if the delay (see the option above) is set to 0 or less.")
-    @ConfigEntry(path = "claim.create-area-on-first-login.abort-on-logout")
-    private boolean createIslandOnFirstLoginAbortOnLogout = true;
-
-    @ConfigComment("Toggles whether the player should be teleported automatically to his area when it is created.")
-    @ConfigComment("If set to false, the player will be told his area is ready but will have to teleport to his area using the command.")
-    @ConfigEntry(path = "claim.teleport-player-to-area-when-created")
-    private boolean teleportPlayerToIslandUponIslandCreation = true;
-
     // Commands
-    @ConfigComment("List of commands to run when a player joins an area or creates one.")
+    @ConfigComment("List of commands to run when a player joins an claim or creates one.")
     @ConfigComment("These commands are run by the console, unless otherwise stated using the [SUDO] prefix,")
     @ConfigComment("in which case they are executed by the player.")
     @ConfigComment("")
@@ -409,11 +243,11 @@ public class Settings implements WorldSettings {
     @ConfigComment("")
     @ConfigComment("Here are some examples of valid commands to execute:")
     @ConfigComment("   * \"[SUDO] bbox version\"")
-    @ConfigComment("   * \"boxadmin deaths set [player] 0\"")
+    @ConfigComment("   * \"give [player] stick 1\"")
     @ConfigEntry(path = "claim.commands.on-join")
     private List<String> onJoinCommands = new ArrayList<>();
 
-    @ConfigComment("List of commands to run when a player leaves an area, resets his area or gets kicked from it.")
+    @ConfigComment("List of commands to run when a player leaves a claim or gets kicked from it.")
     @ConfigComment("These commands are run by the console, unless otherwise stated using the [SUDO] prefix,")
     @ConfigComment("in which case they are executed by the player.")
     @ConfigComment("")
@@ -422,7 +256,7 @@ public class Settings implements WorldSettings {
     @ConfigComment("")
     @ConfigComment("Here are some examples of valid commands to execute:")
     @ConfigComment("   * '[SUDO] bbox version'")
-    @ConfigComment("   * 'boxadmin deaths set [player] 0'")
+    @ConfigComment("   * 'give [player] stick 1'")
     @ConfigComment("")
     @ConfigComment("Note that player-executed commands might not work, as these commands can be run with said player being offline.")
     @ConfigEntry(path = "claim.commands.on-leave")
@@ -437,10 +271,10 @@ public class Settings implements WorldSettings {
     @ConfigComment("")
     @ConfigComment("Here are some examples of valid commands to execute:")
     @ConfigComment("   * '[SUDO] bbox version'")
-    @ConfigComment("   * 'bsbadmin deaths set [player] 0'")
+    @ConfigComment("   * 'give [player] stick 1'")
     @ConfigComment("")
     @ConfigComment("Note that player-executed commands might not work, as these commands can be run with said player being offline.")
-    @ConfigEntry(path = "claim.commands.on-respawn", since = "1.14.0")
+    @ConfigEntry(path = "claim.commands.on-respawn")
     private List<String> onRespawnCommands = new ArrayList<>();
 
     // Sethome
@@ -458,33 +292,10 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "claim.sethome.the-end.require-confirmation")
     private boolean requireConfirmationToSetHomeInTheEnd = true;
 
-    // Deaths
-    @ConfigComment("Whether deaths are counted or not.")
-    @ConfigEntry(path = "claim.deaths.counted")
-    private boolean deathsCounted = true;
-
-    @ConfigComment("Maximum number of deaths to count. The death count can be used by add-ons.")
-    @ConfigEntry(path = "claim.deaths.max")
-    private int deathsMax = 10;
-
-    @ConfigComment("When a player joins a team, reset their death count")
-    @ConfigEntry(path = "claim.deaths.team-join-reset")
-    private boolean teamJoinDeathReset = true;
-
-    @ConfigComment("Reset player death count when they start a new area or reset an area")
-    @ConfigEntry(path = "claim.deaths.reset-on-new-area")
-    private boolean deathsResetOnNewIsland = true;
-
     // ---------------------------------------------
     /*      PROTECTION      */
-
-    @ConfigComment("Geo restrict mobs.")
-    @ConfigComment("Mobs that exit the area space where they were spawned will be removed.")
-    @ConfigEntry(path = "protection.geo-limit-settings")
-    private List<String> geoLimitSettings = new ArrayList<>();
-
     @ConfigComment("Blocked mobs.")
-    @ConfigComment("List of mobs that should not spawn in Boxed.")
+    @ConfigComment("List of mobs that should not spawn.")
     @ConfigEntry(path = "protection.block-mobs")
     private List<String> mobLimitSettings = new ArrayList<>();
 
@@ -544,7 +355,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public int getIslandStartX() {
-        return islandStartX;
+        return 0;
     }
 
     /**
@@ -552,7 +363,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public int getIslandStartZ() {
-        return islandStartZ;
+        return 0;
     }
 
     /**
@@ -576,7 +387,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public int getIslandHeight() {
-        return islandHeight;
+        return -64;
     }
 
     /**
@@ -712,7 +523,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public List<String> getFallingBannedCommands() {
-        return fallingBannedCommands;
+        return Collections.emptyList();
     }
 
     /**
@@ -736,7 +547,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public int getResetLimit() {
-        return resetLimit;
+        return -1;
     }
 
     /**
@@ -744,7 +555,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isLeaversLoseReset() {
-        return leaversLoseReset;
+        return false;
     }
 
     /**
@@ -752,43 +563,40 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isKickedKeepInventory() {
-        return kickedKeepInventory;
+        return true;
     }
 
 
     /**
      * This method returns the createIslandOnFirstLoginEnabled boolean value.
      * @return the createIslandOnFirstLoginEnabled value
-     * @since 1.9.0
      */
     @Override
     public boolean isCreateIslandOnFirstLoginEnabled()
     {
-        return createIslandOnFirstLoginEnabled;
+        return false;
     }
 
 
     /**
      * This method returns the createIslandOnFirstLoginDelay int value.
      * @return the createIslandOnFirstLoginDelay value
-     * @since 1.9.0
      */
     @Override
     public int getCreateIslandOnFirstLoginDelay()
     {
-        return createIslandOnFirstLoginDelay;
+        return 0;
     }
 
 
     /**
      * This method returns the createIslandOnFirstLoginAbortOnLogout boolean value.
      * @return the createIslandOnFirstLoginAbortOnLogout value
-     * @since 1.9.0
      */
     @Override
     public boolean isCreateIslandOnFirstLoginAbortOnLogout()
     {
-        return createIslandOnFirstLoginAbortOnLogout;
+        return true;
     }
 
 
@@ -797,7 +605,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnJoinResetMoney() {
-        return onJoinResetMoney;
+        return false;
     }
 
     /**
@@ -805,7 +613,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnJoinResetInventory() {
-        return onJoinResetInventory;
+        return false;
     }
 
     /**
@@ -813,7 +621,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnJoinResetEnderChest() {
-        return onJoinResetEnderChest;
+        return false;
     }
 
     /**
@@ -821,7 +629,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnLeaveResetMoney() {
-        return onLeaveResetMoney;
+        return false;
     }
 
     /**
@@ -829,7 +637,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnLeaveResetInventory() {
-        return onLeaveResetInventory;
+        return false;
     }
 
     /**
@@ -837,7 +645,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnLeaveResetEnderChest() {
-        return onLeaveResetEnderChest;
+        return false;
     }
 
     /**
@@ -845,7 +653,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isDeathsCounted() {
-        return deathsCounted;
+        return false;
     }
 
     /**
@@ -885,7 +693,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public int getDeathsMax() {
-        return deathsMax;
+        return 0;
     }
 
     /**
@@ -893,7 +701,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isTeamJoinDeathReset() {
-        return teamJoinDeathReset;
+        return false;
     }
 
     /**
@@ -901,7 +709,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public List<String> getGeoLimitSettings() {
-        return geoLimitSettings;
+        return Collections.emptyList();
     }
 
     /**
@@ -961,14 +769,12 @@ public class Settings implements WorldSettings {
      * @param islandStartX the islandStartX to set
      */
     public void setIslandStartX(int islandStartX) {
-        this.islandStartX = islandStartX;
     }
 
     /**
      * @param islandStartZ the islandStartZ to set
      */
     public void setIslandStartZ(int islandStartZ) {
-        this.islandStartZ = islandStartZ;
     }
 
     /**
@@ -1035,13 +841,6 @@ public class Settings implements WorldSettings {
     }
 
     /**
-     * @param fallingBannedCommands the fallingBannedCommands to set
-     */
-    public void setFallingBannedCommands(List<String> fallingBannedCommands) {
-        this.fallingBannedCommands = fallingBannedCommands;
-    }
-
-    /**
      * @param maxTeamSize the maxTeamSize to set
      */
     public void setMaxTeamSize(int maxTeamSize) {
@@ -1053,121 +852,6 @@ public class Settings implements WorldSettings {
      */
     public void setMaxHomes(int maxHomes) {
         this.maxHomes = maxHomes;
-    }
-
-    /**
-     * @param resetLimit the resetLimit to set
-     */
-    public void setResetLimit(int resetLimit) {
-        this.resetLimit = resetLimit;
-    }
-
-    /**
-     * @param leaversLoseReset the leaversLoseReset to set
-     */
-    public void setLeaversLoseReset(boolean leaversLoseReset) {
-        this.leaversLoseReset = leaversLoseReset;
-    }
-
-    /**
-     * @param kickedKeepInventory the kickedKeepInventory to set
-     */
-    public void setKickedKeepInventory(boolean kickedKeepInventory) {
-        this.kickedKeepInventory = kickedKeepInventory;
-    }
-
-    /**
-     * @param onJoinResetMoney the onJoinResetMoney to set
-     */
-    public void setOnJoinResetMoney(boolean onJoinResetMoney) {
-        this.onJoinResetMoney = onJoinResetMoney;
-    }
-
-    /**
-     * @param onJoinResetInventory the onJoinResetInventory to set
-     */
-    public void setOnJoinResetInventory(boolean onJoinResetInventory) {
-        this.onJoinResetInventory = onJoinResetInventory;
-    }
-
-    /**
-     * @param onJoinResetEnderChest the onJoinResetEnderChest to set
-     */
-    public void setOnJoinResetEnderChest(boolean onJoinResetEnderChest) {
-        this.onJoinResetEnderChest = onJoinResetEnderChest;
-    }
-
-    /**
-     * @param onLeaveResetMoney the onLeaveResetMoney to set
-     */
-    public void setOnLeaveResetMoney(boolean onLeaveResetMoney) {
-        this.onLeaveResetMoney = onLeaveResetMoney;
-    }
-
-    /**
-     * @param onLeaveResetInventory the onLeaveResetInventory to set
-     */
-    public void setOnLeaveResetInventory(boolean onLeaveResetInventory) {
-        this.onLeaveResetInventory = onLeaveResetInventory;
-    }
-
-    /**
-     * @param onLeaveResetEnderChest the onLeaveResetEnderChest to set
-     */
-    public void setOnLeaveResetEnderChest(boolean onLeaveResetEnderChest) {
-        this.onLeaveResetEnderChest = onLeaveResetEnderChest;
-    }
-
-    /**
-     * @param createIslandOnFirstLoginEnabled the createIslandOnFirstLoginEnabled to set
-     */
-    public void setCreateIslandOnFirstLoginEnabled(boolean createIslandOnFirstLoginEnabled)
-    {
-        this.createIslandOnFirstLoginEnabled = createIslandOnFirstLoginEnabled;
-    }
-
-    /**
-     * @param createIslandOnFirstLoginDelay the createIslandOnFirstLoginDelay to set
-     */
-    public void setCreateIslandOnFirstLoginDelay(int createIslandOnFirstLoginDelay)
-    {
-        this.createIslandOnFirstLoginDelay = createIslandOnFirstLoginDelay;
-    }
-
-    /**
-     * @param createIslandOnFirstLoginAbortOnLogout the createIslandOnFirstLoginAbortOnLogout to set
-     */
-    public void setCreateIslandOnFirstLoginAbortOnLogout(boolean createIslandOnFirstLoginAbortOnLogout)
-    {
-        this.createIslandOnFirstLoginAbortOnLogout = createIslandOnFirstLoginAbortOnLogout;
-    }
-
-    /**
-     * @param deathsCounted the deathsCounted to set
-     */
-    public void setDeathsCounted(boolean deathsCounted) {
-        this.deathsCounted = deathsCounted;
-    }
-
-    /**
-     * @param deathsMax the deathsMax to set
-     */
-    public void setDeathsMax(int deathsMax) {
-        this.deathsMax = deathsMax;
-    }
-
-    /**
-     * @param teamJoinDeathReset the teamJoinDeathReset to set
-     */
-    public void setTeamJoinDeathReset(boolean teamJoinDeathReset) {
-        this.teamJoinDeathReset = teamJoinDeathReset;
-    }
-
-    /**
-     * @param geoLimitSettings the geoLimitSettings to set
-     */
-    public void setGeoLimitSettings(List<String> geoLimitSettings) {
-        this.geoLimitSettings = geoLimitSettings;
     }
 
     /**
@@ -1273,14 +957,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isDeathsResetOnNewIsland() {
-        return deathsResetOnNewIsland;
-    }
-
-    /**
-     * @param deathsResetOnNew the deathsResetOnNew to set
-     */
-    public void setDeathsResetOnNewIsland(boolean deathsResetOnNew) {
-        this.deathsResetOnNewIsland = deathsResetOnNew;
+        return false;
     }
 
     /**
@@ -1335,14 +1012,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnJoinResetHealth() {
-        return onJoinResetHealth;
-    }
-
-    /**
-     * @param onJoinResetHealth the onJoinResetHealth to set
-     */
-    public void setOnJoinResetHealth(boolean onJoinResetHealth) {
-        this.onJoinResetHealth = onJoinResetHealth;
+        return false;
     }
 
     /**
@@ -1350,14 +1020,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnJoinResetHunger() {
-        return onJoinResetHunger;
-    }
-
-    /**
-     * @param onJoinResetHunger the onJoinResetHunger to set
-     */
-    public void setOnJoinResetHunger(boolean onJoinResetHunger) {
-        this.onJoinResetHunger = onJoinResetHunger;
+        return false;
     }
 
     /**
@@ -1365,14 +1028,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnJoinResetXP() {
-        return onJoinResetXP;
-    }
-
-    /**
-     * @param onJoinResetXP the onJoinResetXP to set
-     */
-    public void setOnJoinResetXP(boolean onJoinResetXP) {
-        this.onJoinResetXP = onJoinResetXP;
+        return false;
     }
 
     /**
@@ -1380,14 +1036,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnLeaveResetHealth() {
-        return onLeaveResetHealth;
-    }
-
-    /**
-     * @param onLeaveResetHealth the onLeaveResetHealth to set
-     */
-    public void setOnLeaveResetHealth(boolean onLeaveResetHealth) {
-        this.onLeaveResetHealth = onLeaveResetHealth;
+        return false;
     }
 
     /**
@@ -1395,14 +1044,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnLeaveResetHunger() {
-        return onLeaveResetHunger;
-    }
-
-    /**
-     * @param onLeaveResetHunger the onLeaveResetHunger to set
-     */
-    public void setOnLeaveResetHunger(boolean onLeaveResetHunger) {
-        this.onLeaveResetHunger = onLeaveResetHunger;
+        return false;
     }
 
     /**
@@ -1410,14 +1052,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isOnLeaveResetXP() {
-        return onLeaveResetXP;
-    }
-
-    /**
-     * @param onLeaveResetXP the onLeaveResetXP to set
-     */
-    public void setOnLeaveResetXP(boolean onLeaveResetXP) {
-        this.onLeaveResetXP = onLeaveResetXP;
+        return false;
     }
 
     /**
@@ -1428,23 +1063,9 @@ public class Settings implements WorldSettings {
         return false;
     }
 
-    /**
-     * Toggles whether the player should be teleported automatically to his island when it is created.
-     * @return {@code true} if the player should be teleported automatically to his island when it is created,
-     *         {@code false} otherwise.
-     * @since 1.10.0
-     */
     @Override
     public boolean isTeleportPlayerToIslandUponIslandCreation() {
-        return teleportPlayerToIslandUponIslandCreation;
-    }
-
-    /**
-     * @param teleportPlayerToIslandUponIslandCreation the teleportPlayerToIslandUponIslandCreation to set
-     * @since 1.10.0
-     */
-    public void setTeleportPlayerToIslandUponIslandCreation(boolean teleportPlayerToIslandUponIslandCreation) {
-        this.teleportPlayerToIslandUponIslandCreation = teleportPlayerToIslandUponIslandCreation;
+        return false;
     }
 
     /**
@@ -1627,75 +1248,11 @@ public class Settings implements WorldSettings {
     }
 
     /**
-     * @return the onJoinResetAdvancements
-     */
-    public boolean isOnJoinResetAdvancements() {
-        return onJoinResetAdvancements;
-    }
-
-    /**
-     * @param onJoinResetAdvancements the onJoinResetAdvancements to set
-     */
-    public void setOnJoinResetAdvancements(boolean onJoinResetAdvancements) {
-        this.onJoinResetAdvancements = onJoinResetAdvancements;
-    }
-
-    /**
-     * @return the onJoinGrantAdvancements
-     */
-    public List<String> getOnJoinGrantAdvancements() {
-        return onJoinGrantAdvancements;
-    }
-
-    /**
-     * @param onJoinGrantAdvancements the onJoinGrantAdvancements to set
-     */
-    public void setOnJoinGrantAdvancements(List<String> onJoinGrantAdvancements) {
-        this.onJoinGrantAdvancements = onJoinGrantAdvancements;
-    }
-
-    /**
-     * @return the onLeaveGrantAdvancements
-     */
-    public List<String> getOnLeaveGrantAdvancements() {
-        return onLeaveGrantAdvancements;
-    }
-
-    /**
-     * @param onLeaveGrantAdvancements the onLeaveGrantAdvancements to set
-     */
-    public void setOnLeaveGrantAdvancements(List<String> onLeaveGrantAdvancements) {
-        this.onLeaveGrantAdvancements = onLeaveGrantAdvancements;
-    }
-
-    /**
-     * @return the onLeaveResetAdvancements
-     */
-    public boolean isOnLeaveResetAdvancements() {
-        return onLeaveResetAdvancements;
-    }
-
-    /**
-     * @param onLeaveResetAdvancements the onLeaveResetAdvancements to set
-     */
-    public void setOnLeaveResetAdvancements(boolean onLeaveResetAdvancements) {
-        this.onLeaveResetAdvancements = onLeaveResetAdvancements;
-    }
-
-    /**
      * @return the makeNetherPortals
      */
     @Override
     public boolean isMakeNetherPortals() {
-        return makeNetherPortals;
-    }
-
-    /**
-     * Sets make nether portals.
-     * @param makeNetherPortals the make nether portals
-     */
-    public void setMakeNetherPortals(boolean makeNetherPortals) {
-        this.makeNetherPortals = makeNetherPortals;
+        return false;
     }
 
     /**
@@ -1738,13 +1295,6 @@ public class Settings implements WorldSettings {
      */
     public int getEndSeedZ() {
         return 0;
-    }
-
-    /**
-     * @param islandHeight the islandHeight to set
-     */
-    public void setIslandHeight(int islandHeight) {
-        this.islandHeight = islandHeight;
     }
 
     /**
@@ -1827,20 +1377,6 @@ public class Settings implements WorldSettings {
      */
     public void setBarrierIncreaseBlocks(int barrierIncreaseBlocks) {
         this.barrierIncreaseBlocks = barrierIncreaseBlocks;
-    }
-
-    /**
-     * @return the minimumClaimDistance
-     */
-    public int getMinimumClaimDistance() {
-        return minimumClaimDistance;
-    }
-
-    /**
-     * @param minimumClaimDistance the minimumClaimDistance to set
-     */
-    public void setMinimumClaimDistance(int minimumClaimDistance) {
-        this.minimumClaimDistance = minimumClaimDistance;
     }
 
     /**

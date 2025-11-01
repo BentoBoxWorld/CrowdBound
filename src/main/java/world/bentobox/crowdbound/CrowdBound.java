@@ -13,7 +13,6 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.SpawnCategory;
-import org.bukkit.event.Listener;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
@@ -25,12 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.addons.GameModeAddon;
 import world.bentobox.bentobox.api.commands.admin.DefaultAdminCommand;
 import world.bentobox.bentobox.api.commands.island.DefaultPlayerCommand;
 import world.bentobox.bentobox.api.configuration.Config;
 import world.bentobox.bentobox.api.configuration.WorldSettings;
+import world.bentobox.bentobox.database.objects.Island;
+import world.bentobox.bentobox.managers.IslandsManager;
 import world.bentobox.crowdbound.commands.admin.WorldBorderCommand;
 import world.bentobox.crowdbound.commands.player.ClaimCommand;
 import world.bentobox.crowdbound.commands.player.SpawnCommand;
@@ -131,6 +131,18 @@ public class CrowdBound extends GameModeAddon {
         
         // Register recipe for warped compass
         registerWarpedCompassRecipe();
+        
+        // Set the initial spawn
+        if (getPlugin().getIslands().getSpawn(getOverWorld()).isEmpty()) {
+            // Make a spawn claim
+            Island spawn = getPlugin().getIslands().createIsland(getOverWorld().getSpawnLocation());
+            if (spawn != null) {
+                spawn.setSpawn(true);
+                IslandsManager.saveIsland(spawn);
+            } else {
+                this.logError("Could not make a spawn claim. You will have to set one manually in the world.");
+            }
+        }
     }
 
     @Override
