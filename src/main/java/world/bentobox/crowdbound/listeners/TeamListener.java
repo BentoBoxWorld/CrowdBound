@@ -27,7 +27,7 @@ public class TeamListener implements Listener {
         this.addon = addon;
 
     }
-    
+
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
@@ -35,10 +35,10 @@ public class TeamListener implements Listener {
         if (!addon.inWorld(player.getWorld())) {
             return;
         }
-        // Check if the player has a claim
+        // Check if the player has a claim and if so, resize it
         addon.getIslands().getIslands(player.getWorld(), player.getUniqueId()).forEach(this::resize);
     }
-    
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent e) {
         Player player = e.getPlayer();
@@ -52,61 +52,73 @@ public class TeamListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onTeamJoin(TeamJoinedEvent e) {
-        if (e.getIsland().getMemberSet().size() == 1) {
-            // New claim
+        if (!addon.inWorld(e.getIsland().getWorld()) // Not in game world
+                || e.getIsland().getMemberSet().size() == 1 // New claim
+                || addon.getSettings().getMemberBonus() == 0 // No resizing
+                ) {
             return;
         }
-        resize(e.getIsland());
+        int change =  resize(e.getIsland());
+        // If there is no difference in size, explain why
+        if (change == 0 && e.getIsland().getOwner() != null) {
+            User.getInstance(e.getIsland().getOwner()).sendMessage("crowdbound.claim.team-no-change");
+        }
     }
-    
+
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onTeamKick(TeamKickEvent e) {
-        resize(e.getIsland());
+        if (!addon.inWorld(e.getIsland().getWorld()) // Not in game world
+                || addon.getSettings().getMemberBonus() != 0) {
+            resize(e.getIsland());
+        }
     }
-    
+
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onTeamLeave(TeamLeaveEvent e) {
-        resize(e.getIsland());
+        if (!addon.inWorld(e.getIsland().getWorld()) // Not in game world
+                || addon.getSettings().getMemberBonus() != 0) {
+            resize(e.getIsland());
+        }
     }
 
-    private void resize(Island claim) {
-        if (addon.inWorld(claim.getWorld())) {
-            // In our world
-            // Resize this claim
-            int size = addon.getSettings().getIslandDistance() + addon.getSettings().getMemberBonus() * (claim.getMemberSet().size()-1);
-            int oldSize = claim.getProtectionRange();
-            
-            // TODO: check if new size overlaps any current claims and shrink down if needed
-            
-            // Set to size of team
+    protected int resize(Island claim) {
+        // Remove old claim from grid
+        addon.getPlugin().getIslands().getIslandCache().getIslandGrid(claim.getWorld()).removeFromGrid(claim);
+
+        // Resize this claim
+        int size = addon.getSettings().getIslandDistance() + addon.getSettings().getMemberBonus() * (claim.getMemberSet().size()-1);
+        int oldSize = claim.getProtectionRange();
+        // Try this size
+        claim.setRange(size);
+        // Loop until it fits
+        while (!addon.getPlugin().getIslands().getIslandCache().getIslandGrid(claim.getWorld()).addToGrid(claim) && size > oldSize) {
+            // It doesn't fit so it must shrink (maybe to the original size)
+            size--;
             claim.setRange(size);
-            // Update grid
-            addon.getPlugin().getIslands().getIslandCache().getIslandGrid(claim.getWorld()).removeFromGrid(claim);
-            addon.getPlugin().getIslands().getIslandCache().getIslandGrid(claim.getWorld()).addToGrid(claim);
-            claim.setProtectionRange(size); // This should trigger an update to the border viewed via the event
-
-            if (size == oldSize) {
-                return;
-            }
-            // Determine the message key suffix based on whether the team size increased or decreased
-            final String suffix = size > oldSize ? "increase" : "decrease";           
-
-            // Notify players
-            if (claim.isOwned()) {
-                // Tell owner
-                User.getInstance(claim.getOwner()).sendMessage("crowdbound.claim.team-" + suffix + "-owner");
-            }
-
-            // Tell players on the claim (excluding the owner, if one exists)
-            claim.getPlayersOnIsland().stream()
-            .filter(p -> claim.getOwner() == null || !p.getUniqueId().equals(claim.getOwner()))
-            .map(User::getInstance)
-            .forEach(u -> u.sendMessage("crowdbound.claim.team-" + suffix));
-            
-            
         }
-        
+        claim.setProtectionRange(size); // This should trigger an update to the border viewed via the event
+
+        if (size == oldSize) {
+            return 0;
+        }
+        // Determine the message key suffix based on whether the team size increased or decreased
+        final String suffix = size > oldSize ? "increase" : "decrease";           
+
+        // Notify players
+        if (claim.isOwned()) {
+            // Tell owner
+            User.getInstance(claim.getOwner()).sendMessage("crowdbound.claim.team-" + suffix + "-owner");
+        }
+
+        // Tell players on the claim (excluding the owner, if one exists)
+        claim.getPlayersOnIsland().stream()
+        .filter(p -> claim.getOwner() == null || !p.getUniqueId().equals(claim.getOwner()))
+        .map(User::getInstance)
+        .forEach(u -> u.sendMessage("crowdbound.claim.team-" + suffix));
+
+        return size - oldSize;
     }
 
 }
+
 

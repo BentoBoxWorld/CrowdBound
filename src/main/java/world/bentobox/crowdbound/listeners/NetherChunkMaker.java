@@ -1,7 +1,8 @@
-package world.bentobox.crowdbound.generators;
+package world.bentobox.crowdbound.listeners;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -31,10 +32,10 @@ import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.bentobox.util.ExpiringSet;
@@ -42,6 +43,9 @@ import world.bentobox.bentobox.util.Pair;
 import world.bentobox.crowdbound.CrowdBound;
 import world.bentobox.crowdbound.database.NetherChunksMade;
 
+/**
+ * Listener for managing Nether chunk creation and player interactions with Nether portals.
+ */
 public class NetherChunkMaker implements Listener {
 
     private static final int ROOF_HEIGHT = 107;
@@ -51,6 +55,7 @@ public class NetherChunkMaker implements Listener {
     private NetherChunksMade netherChunksMade;
     private final int maxChestFills;
     private ExpiringSet<UUID> portalPlayer = new ExpiringSet<>(10, TimeUnit.SECONDS);
+    private final TreeMap<Integer, LootTable> chestContents;
 
     public NetherChunkMaker(CrowdBound addon) {
         super();
@@ -61,98 +66,157 @@ public class NetherChunkMaker implements Listener {
             netherChunksMade = new NetherChunksMade();
             handler.saveObjectAsync(netherChunksMade);
         }
+        // Chests
         maxChestFills = addon.getSettings().getChestFills();
+        chestContents = new TreeMap<>();
+        chestContents.put(1, LootTables.BASTION_TREASURE.getLootTable()); // Rare
+        chestContents.put(4, LootTables.NETHER_BRIDGE.getLootTable()); // Uncommon
+        chestContents.put(9, LootTables.GHAST.getLootTable()); // Common
+        chestContents.put(14, LootTables.PIGLIN_BARTERING.getLootTable()); // Common
     }
- 
+
+    /**
+     * Handles the event when a player enters a Nether portal.
+     * 
+     * @param e The event triggered when an entity enters a portal.
+     */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onNetherPortalEnter(EntityPortalEnterEvent e) {
         // Only trigger if the player is going from the overworld to the nether
         if (e.getPortalType() != PortalType.NETHER 
                 || e.getEntityType() != EntityType.PLAYER
                 || !addon.inWorld(e.getLocation())
-                || portalPlayer.contains(e.getEntity().getUniqueId()) // If they are in the map, ignore
-                ) {
+                || portalPlayer.contains(e.getEntity().getUniqueId())) { // If they are in the map, ignore
             return;
         }
         Player p = (Player)e.getEntity();
         // Add the player as teleporting
         portalPlayer.add(p.getUniqueId());
         if (e.getLocation().getWorld().getEnvironment() == Environment.NETHER) {
-            return;
+            return; // No action needed if already in the Nether
         }
-        
+
+        // Check if the player is holding a warped compass
         if (CrowdBound.isWarpedCompass(p.getInventory().getItemInMainHand()) 
                 || CrowdBound.isWarpedCompass(p.getInventory().getItemInOffHand())) {
-            // Refresh the nether!
-            int chunkRadius = Bukkit.getViewDistance();
-            int x = p.getLocation().getChunk().getX();
-            int z = p.getLocation().getChunk().getZ();
-            // Removing the listing of chunks from the database will cause them to be re-made
-            for (int i = x - chunkRadius; i < x + chunkRadius; i++) {
-                for (int j = z - chunkRadius; j < z + chunkRadius; j++) {
-                    this.netherChunksMade.getChunkSet().remove(Pair.of(i, j));
-                }
-            }
-            handler.saveObject(netherChunksMade);
-            User.getInstance(p).sendMessage("crowdbound.nether.refresh");
-            Bukkit.getScheduler().runTask(addon.getPlugin(), () -> p.playSound(p, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1F, 1F));
-            // Get the item in the main hand
-            ItemStack mainHandItem = p.getInventory().getItemInMainHand();
-
-            if (CrowdBound.isWarpedCompass(mainHandItem)) {
-                // Reduce the amount by 1. If the new amount is 0, Bukkit automatically sets the slot to null.
-                mainHandItem.subtract(1); 
-                return;
-            } 
-
-            // If not in the main hand, check the off-hand
-            ItemStack offHandItem = p.getInventory().getItemInOffHand();
-
-            if (CrowdBound.isWarpedCompass(offHandItem)) {
-                // Reduce the amount by 1.
-                offHandItem.subtract(1);
-            }
+            // Refresh the Nether chunks
+            refreshNetherChunks(p);
         }
     }
 
+    /**
+     * Refreshes the Nether chunks based on the player's location.
+     * 
+     * @param p The player who triggered the refresh.
+     */
+    private void refreshNetherChunks(Player p) {
+        int chunkRadius = Bukkit.getViewDistance();
+        int x = p.getLocation().getChunk().getX();
+        int z = p.getLocation().getChunk().getZ();
+        // Removing the listing of chunks from the database will cause them to be re-made
+        for (int i = x - chunkRadius; i < x + chunkRadius; i++) {
+            for (int j = z - chunkRadius; j < z + chunkRadius; j++) {
+                this.netherChunksMade.getChunkSet().remove(Pair.of(i, j));
+            }
+        }
+        handler.saveObject(netherChunksMade);
+        User.getInstance(p).sendMessage("crowdbound.nether.refresh");
+        Bukkit.getScheduler().runTask(addon.getPlugin(), () -> p.playSound(p, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1F, 1F));
+
+        // Reduce the amount of the warped compass used
+        reduceWarpedCompassAmount(p);
+    }
+
+    /**
+     * Reduces the amount of the warped compass in the player's inventory.
+     * 
+     * @param p The player whose inventory is being checked.
+     */
+    private void reduceWarpedCompassAmount(Player p) {
+        ItemStack mainHandItem = p.getInventory().getItemInMainHand();
+        if (CrowdBound.isWarpedCompass(mainHandItem)) {
+            mainHandItem.subtract(1); // Reduce the amount by 1
+            return;
+        } 
+
+        // If not in the main hand, check the off-hand
+        ItemStack offHandItem = p.getInventory().getItemInOffHand();
+        if (CrowdBound.isWarpedCompass(offHandItem)) {
+            offHandItem.subtract(1); // Reduce the amount by 1
+        }
+    }
+
+    /**
+     * Handles the event when a chunk is loaded in the Nether.
+     * 
+     * @param e The event triggered when a chunk is loaded.
+     */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent e) {
-        if (e.getWorld().getEnvironment() != Environment.NETHER 
-                || !addon.getSettings().isUseUpsideDown()
-                || !addon.inWorld(e.getWorld())) {
-            return;
+        if (!isValidChunkLoadEvent(e)) {
+            return; // Ignore invalid chunk load events
         }
-        if (!netherChunksMade.getChunkSet().add(Pair.of(e.getChunk().getX(), e.getChunk().getZ()))) {
-            return;
-        }
-        int chestFills = 0;
-        handler.saveObjectAsync(netherChunksMade); // Save to database
 
+        if (!netherChunksMade.getChunkSet().add(Pair.of(e.getChunk().getX(), e.getChunk().getZ()))) {
+            return; // Ignore if the chunk is already processed
+        }
+
+        handler.saveObjectAsync(netherChunksMade); // Save to database
+        clearTileEntities(e); // Clear tile entities in the chunk
+        clearEntities(e); // Clear entities in the chunk
+        convertBlocks(e); // Convert blocks from overworld to Nether
+        spawnNetherEntities(e); // Spawn Nether entities
+    }
+
+    /**
+     * Validates if the chunk load event is applicable for processing.
+     * 
+     * @param e The chunk load event.
+     * @return true if valid, false otherwise.
+     */
+    private boolean isValidChunkLoadEvent(ChunkLoadEvent e) {
+        return e.getWorld().getEnvironment() == Environment.NETHER 
+                && addon.getSettings().isUseUpsideDown()
+                && addon.inWorld(e.getWorld());
+    }
+
+    /**
+     * Clears tile entities in the loaded chunk that are below the roof height.
+     * 
+     * @param e The chunk load event.
+     */
+    private void clearTileEntities(ChunkLoadEvent e) {
+        Arrays.stream(e.getChunk().getTileEntities())
+        .filter(en -> en.getLocation().getBlockY() < ROOF_HEIGHT && en instanceof InventoryHolder)
+        .forEach(tileEntity -> ((InventoryHolder) tileEntity).getInventory().clear());
+    }
+
+    /**
+     * Clears entities in the loaded chunk that are below the roof height.
+     * 
+     * @param e The chunk load event.
+     */
+    private void clearEntities(ChunkLoadEvent e) {
+        Arrays.stream(e.getChunk().getEntities())
+        .filter(en -> en.getType() != EntityType.PLAYER && en.getLocation().getBlockY() < ROOF_HEIGHT)
+        .forEach(Entity::remove);
+    }
+
+    /**
+     * Converts blocks in the loaded chunk from overworld to Nether equivalents.
+     * 
+     * @param e The chunk load event.
+     */
+    private void convertBlocks(ChunkLoadEvent e) {
         // Get the overworld chunk we are copying from
         Chunk overworldChunk = addon.getOverWorld().getChunkAt(e.getChunk().getX(), e.getChunk().getZ());
         // Determine the attrition
         int rawAttritionValue = addon.getSettings().getAttrition();
         double attrition = (rawAttritionValue >= 0 && rawAttritionValue <= 100)
-                // If TRUE: Calculate the percentage (using 100.0 for double division).
-                ? rawAttritionValue / 100.0
-                        // If FALSE: Use the default 5% (0.05).
-                        : 0.05;
-
-        // Remove any tile entity contents
-        Arrays.stream(e.getChunk().getTileEntities())
-        .filter(en -> en.getLocation().getBlockY() < ROOF_HEIGHT)
-        .forEach(tileEntity -> {
-            // Check if the tile entity is an InventoryHolder (like a chest, furnace, etc.)
-            if (tileEntity instanceof InventoryHolder ih) {
-                // Get the inventory and clear its contents
-                ih.getInventory().clear();
-            }
-        });
-        // Removed any entities in this chunk - they will be replaced
-        Arrays.stream(e.getChunk().getEntities())
-        .filter(en -> en.getType() != EntityType.PLAYER)
-        .filter(en -> en.getLocation().getBlockY() < ROOF_HEIGHT)
-        .forEach(Entity::remove);
+                ? rawAttritionValue / 100.0 // Calculate the percentage
+                        : 0.05; // Default to 5%
+        // Count chests
+        int chestFills = 0;
 
         // Loop through the chunk and set blocks
         for (int y = e.getWorld().getMinHeight(); y < ROOF_HEIGHT; y++) {
@@ -160,47 +224,42 @@ public class NetherChunkMaker implements Listener {
                 for (int z = 0; z < 16; z++) {
                     Block overworldBlock = overworldChunk.getBlock(x, y, z);
                     Block newBlock = e.getChunk().getBlock(x, y, z);
-                    newBlock.setBiome(Biome.BASALT_DELTAS);
+                    newBlock.setBiome(Biome.BASALT_DELTAS); // Set biome for the new block
                     if (overworldBlock.getType() == newBlock.getType() 
                             || newBlock.getType() == Material.NETHER_PORTAL // We must not touch these otherwise errors occur
                             || y > 100 && rand.nextDouble() < attrition) {
-                        continue;
+                        continue; // Skip if the block types are the same or if conditions are met
                     }
-                    BlockData bd = overworldBlock.getBlockData();
-                    Material material = bd.getMaterial(); // Get the material for the switch
-                    BlockData newBlockData = bd.clone(); // Clone the BlockData to modify it
+                    BlockData overworldBlockData = overworldBlock.getBlockData();
+                    Material material = overworldBlockData.getMaterial(); // Get the material for the switch
+                    BlockData newBlockData = overworldBlockData.clone(); // Clone the BlockData to modify it
 
                     // --- Tag-Based Conversion ---
+                    // Convert blocks based on their tags
                     if (Tag.BUTTONS.isTagged(material)) {
-                        newBlockData = rand.nextBoolean() ? Material.AIR .createBlockData() :  Material.STONE_BUTTON.createBlockData(); // Converts all buttons to stone
+                        newBlockData = rand.nextBoolean() ? Material.AIR.createBlockData() : Material.STONE_BUTTON.createBlockData(); // Converts all buttons to stone
                     } else if (Tag.DOORS.isTagged(material) || Tag.FENCE_GATES.isTagged(material)) {
                         newBlockData = Material.AIR.createBlockData(); // Converts all doors to air
                     } else if (Tag.CORAL_BLOCKS.isTagged(material)) {
                         newBlockData = Material.NETHERRACK.createBlockData(); // Converts all coral blocks to netherrack
                     } else if (Tag.LOGS.isTagged(material)) {
-                        // Converts all overworld logs to Warped Stem (a Nether log-like material)
-                        newBlockData = Material.WARPED_STEM.createBlockData();
+                        newBlockData = Material.WARPED_STEM.createBlockData(); // Converts all overworld logs to Warped Stem
                         e.getChunk().getBlock(x, y, z).setBiome(Biome.WARPED_FOREST);
                     } else if (Tag.LEAVES.isTagged(material)) {
-                        // Converts all overworld leaves to Nether Wart Block or similar
-                        newBlockData = Material.NETHER_WART_BLOCK.createBlockData();
+                        newBlockData = Material.NETHER_WART_BLOCK.createBlockData(); // Converts all overworld leaves to Nether Wart Block
                     } else if (Tag.STONE_BRICKS.isTagged(material)) {
-                        // Converts all stone bricks to Nether Bricks
-                        newBlockData = rand.nextBoolean() ? Material.AIR .createBlockData() :  Material.NETHER_BRICKS.createBlockData();
+                        newBlockData = rand.nextBoolean() ? Material.AIR.createBlockData() : Material.NETHER_BRICKS.createBlockData(); // Converts all stone bricks to Nether Bricks
                     } else if (Tag.SAND.isTagged(material)) {
-                        // Converts all types of sand to Soul Sand
-                        newBlockData = Material.SOUL_SAND.createBlockData();
+                        newBlockData = Material.SOUL_SAND.createBlockData(); // Converts all types of sand to Soul Sand
                         e.getChunk().getBlock(x, y, z).setBiome(Biome.SOUL_SAND_VALLEY);
                     } else if (Tag.DIRT.isTagged(material)) {
-                        // Converts all dirt/grass-like blocks to Soul Soil
-                        newBlockData = Material.NETHERRACK.createBlockData();
+                        newBlockData = Material.NETHERRACK.createBlockData(); // Converts all dirt/grass-like blocks to Netherrack
                     } else if (Tag.FLOWERS.isTagged(material) || Tag.SAPLINGS.isTagged(material)) {
-                        // Converts flowers/saplings to a less common Nether material
-                        newBlockData = Material.CRIMSON_ROOTS.createBlockData();
+                        newBlockData = Material.CRIMSON_ROOTS.createBlockData(); // Converts flowers/saplings to Crimson Roots
                         e.getChunk().getBlock(x, y, z).setBiome(Biome.CRIMSON_FOREST);
                     } else if (Tag.COAL_ORES.isTagged(material) || Tag.IRON_ORES.isTagged(material) || Tag.GOLD_ORES.isTagged(material)) {
                         // Converts overworld ores to their Nether equivalent (or just a common Nether block)
-                        newBlockData = Material.GLOWSTONE.createBlockData(); // Example conversion
+                        newBlockData = Material.NETHER_GOLD_ORE.createBlockData(); // Example conversion
                     } else if (Tag.CROPS.isTagged(material)) {
                         newBlockData = Material.NETHER_WART.createBlockData();
                         e.getChunk().getBlock(x, Math.max(y-1, e.getWorld().getMinHeight()), z).setType(Material.SOUL_SAND);
@@ -293,10 +352,14 @@ public class NetherChunkMaker implements Listener {
                             break;
                         case GRAVEL:
                             break;
-                        case STONE:
                         case ANDESITE:
+                            newBlockData = Material.SOUL_SOIL.createBlockData();
+                            break;
                         case DIORITE:
                         case GRANITE:
+                            newBlockData = Material.BASALT.createBlockData();
+                            break;
+                        case STONE:
                         case BUBBLE_COLUMN:
                             newBlockData = Material.NETHERRACK.createBlockData();
                             break;
@@ -342,7 +405,6 @@ public class NetherChunkMaker implements Listener {
                             newBlockData = Material.NETHER_BRICK.createBlockData();
                             break;
                         case CHEST:
-                            newBlockData = Material.CHEST.createBlockData();
                             break;
                         default:
                             newBlockData = Material.BLACKSTONE.createBlockData();
@@ -353,50 +415,84 @@ public class NetherChunkMaker implements Listener {
                     newBlock.setBlockData(newBlockData, false);
 
                     // Set aspects of the block to match the overworld
-                    if (bd instanceof Fence fence && newBlockData instanceof Fence newFence) {
+                    if (overworldBlockData instanceof Fence fence && newBlockData instanceof Fence newFence) {
                         fence.getFaces().forEach(bf -> newFence.setFace(bf, true));
                     }
-                    if (bd instanceof Stairs stairs && newBlockData instanceof Stairs newStairs) {
+                    if (overworldBlockData instanceof Stairs stairs && newBlockData instanceof Stairs newStairs) {
                         newStairs.setFacing(stairs.getFacing());
                     }
-                    if (bd instanceof Slab slab && newBlockData instanceof Slab newSlab) {
+                    if (overworldBlockData instanceof Slab slab && newBlockData instanceof Slab newSlab) {
                         newSlab.setType(slab.getType());
                     }
                     if (newBlock.getState() instanceof Chest chest && chestFills < maxChestFills) {
                         chestFills++;
                         // If it's a chest, then put some random stuff in it
-                        Location chestLocation = chest.getLocation();
-                        LootContext context = new LootContext.Builder(chestLocation)
-                                .build(); // .build() creates the final immutable context object
-                        // Define the LootTable you want to use (e.g., a Bastion Treasure chest)
-                        LootTable netherLoot = LootTables.BASTION_TREASURE.getLootTable();
-                        // A. Set the LootTable on the Chest's BlockState
-                        chest.setLootTable(netherLoot);
-
-                        // B. Generate the loot immediately
-                        // Note: You must provide a random number generator and a context.
-                        // The 'null' for the loot context is often acceptable for basic generation.
-                        chest.getInventory().clear(); // Clear any pre-existing items (important!)
-                        chest.setSeed(System.currentTimeMillis() + chestLocation.hashCode()); // Set a seed for unique loot
-
-                        // Generate the items and place them in the inventory
-                        netherLoot.fillInventory(chest.getInventory(), rand, context);
-
-                        // Facing
-                        if (bd instanceof org.bukkit.block.data.type.Chest chestData && newBlockData instanceof org.bukkit.block.data.type.Chest newChest) {
-                            newChest.setFacing(chestData.getFacing());
-                        }
-                        // C. Apply the changes
-                        chest.update(true); 
-
+                        populateChest(overworldBlockData, chest, newBlockData);
                     }
-                    newBlock.setBlockData(newBlockData, false);
-
+                    newBlock.setBlockData(newBlockData, false); // Finalize the block data
                 }
             }
         }
+    }
+
+    /**
+     * Populates a chest with loot from a defined LootTable.
+     * @param bd 
+     * 
+     * @param chest The chest to populate.
+     * @param newBlockData 
+     */
+    private void populateChest(BlockData bd, Chest chest, BlockData newBlockData) {
+        Location chestLocation = chest.getLocation();
+
+        // Set the loot table
+        // Total weight is 1 + 3 + 5 + 5 = 14
+        int totalWeight = chestContents.lastKey(); 
+        // Generate random number in the range [0, 13]
+        int randomValue = rand.nextInt(totalWeight);
+        // Select the correct loot table
+        chest.setLootTable(chestContents.higherEntry(randomValue).getValue());
+
+        // Set a seed so it gets fills on first open.
+        chest.getInventory().clear();
+        chest.setSeed(System.currentTimeMillis() + chestLocation.hashCode());
+
+        // Facing
+        if (bd instanceof org.bukkit.block.data.type.Chest chestData && newBlockData instanceof org.bukkit.block.data.type.Chest newChest) {
+            newChest.setFacing(chestData.getFacing());
+        }
+        chest.update(true);
+    }
+
+    /**
+     * Selects a loot table based on the provided weights.
+     * 
+     * @param lootTables The array of loot tables to choose from.
+     * @param weights The corresponding weights for each loot table.
+     * @return The selected LootTable.
+     */
+    private LootTable selectLootTable(LootTable[] lootTables, int[] weights) {
+        int totalWeight = Arrays.stream(weights).sum();
+        int randomValue = rand.nextInt(totalWeight);
+        int cumulativeWeight = 0;
+
+        for (int i = 0; i < lootTables.length; i++) {
+            cumulativeWeight += weights[i];
+            if (randomValue < cumulativeWeight) {
+                return lootTables[i];
+            }
+        }
+        return lootTables[0]; // Fallback
+    }
+
+    /**
+     * Spawns Nether entities based on the entities present in the loaded chunk.
+     * 
+     * @param e The chunk load event.
+     */
+    private void spawnNetherEntities(ChunkLoadEvent e) {
         // Now do Mobs
-        Arrays.stream(overworldChunk.getEntities())
+        Arrays.stream(e.getChunk().getEntities())
         .filter(en -> en instanceof LivingEntity)
         .forEach(en -> {
             EntityType newType = getNetherEnt(en.getType());

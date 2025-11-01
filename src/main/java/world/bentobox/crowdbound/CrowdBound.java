@@ -34,8 +34,8 @@ import world.bentobox.bentobox.api.configuration.WorldSettings;
 import world.bentobox.crowdbound.commands.admin.WorldBorderCommand;
 import world.bentobox.crowdbound.commands.player.ClaimCommand;
 import world.bentobox.crowdbound.commands.player.SpawnCommand;
-import world.bentobox.crowdbound.generators.NetherChunkMaker;
 import world.bentobox.crowdbound.listeners.BorderShower;
+import world.bentobox.crowdbound.listeners.NetherChunkMaker;
 import world.bentobox.crowdbound.listeners.PlayerListener;
 import world.bentobox.crowdbound.listeners.TeamListener;
 
