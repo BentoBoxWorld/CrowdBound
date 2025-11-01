@@ -35,7 +35,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 
-import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.bentobox.util.ExpiringSet;
@@ -49,6 +48,7 @@ import world.bentobox.crowdbound.database.NetherChunksMade;
 public class NetherChunkMaker implements Listener {
 
     private static final int ROOF_HEIGHT = 107;
+    private static final String NETHER_CHUNKS_TABLE = "NetherChunks";
     private CrowdBound addon;
     private Random rand = new Random();
     private final Database<NetherChunksMade> handler;
@@ -61,8 +61,10 @@ public class NetherChunkMaker implements Listener {
         super();
         this.addon = addon;
         handler = new Database<>(addon, NetherChunksMade.class);
-        netherChunksMade = handler.loadObject("NetherChunks");
-        if (netherChunksMade == null) {
+        if (handler.objectExists(NETHER_CHUNKS_TABLE)) {
+            netherChunksMade = handler.loadObject(NETHER_CHUNKS_TABLE);
+        } else {
+            // Initial entry
             netherChunksMade = new NetherChunksMade();
             handler.saveObjectAsync(netherChunksMade);
         }
@@ -462,27 +464,6 @@ public class NetherChunkMaker implements Listener {
             newChest.setFacing(chestData.getFacing());
         }
         chest.update(true);
-    }
-
-    /**
-     * Selects a loot table based on the provided weights.
-     * 
-     * @param lootTables The array of loot tables to choose from.
-     * @param weights The corresponding weights for each loot table.
-     * @return The selected LootTable.
-     */
-    private LootTable selectLootTable(LootTable[] lootTables, int[] weights) {
-        int totalWeight = Arrays.stream(weights).sum();
-        int randomValue = rand.nextInt(totalWeight);
-        int cumulativeWeight = 0;
-
-        for (int i = 0; i < lootTables.length; i++) {
-            cumulativeWeight += weights[i];
-            if (randomValue < cumulativeWeight) {
-                return lootTables[i];
-            }
-        }
-        return lootTables[0]; // Fallback
     }
 
     /**
