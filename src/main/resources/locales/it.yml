@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Il tuo reclamo si è espanso grazie a un nuovo membro!"
     team-decrease-owner: "&b Il tuo reclamo è più piccolo poiché un membro della squadra se n'è andato."
     team-increase: "&a Questo reclamo si è espanso grazie a un nuovo membro!"
-    team-decrease-owner: "&b Questo reclamo è più piccolo poiché un membro della squadra se n'è andato."
+    team-decrease: "&b Questo reclamo è più piccolo poiché un membro della squadra se n'è andato."
     team-no-change: "&d La dimensione del reclamo non è potuta essere espansa! Dev'essere affollato là fuori!"
   commands:
     admin:

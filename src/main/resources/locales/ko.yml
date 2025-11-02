@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a 새로운 팀원 덕분에 당신의 영토가 확장되었습니다!"
     team-decrease-owner: "&b 팀원이 떠났기 때문에 당신의 영토가 축소되었습니다."
     team-increase: "&a 새로운 팀원 덕분에 이 클레임이 확장되었습니다!"
-    team-decrease-owner: "&b 팀원이 떠났기 때문에 이 클레임이 축소되었습니다."
+    team-decrease: "&b 팀원이 떠났기 때문에 이 클레임이 축소되었습니다."
     team-no-change: "&d 클레임 크기를 확장할 수 없었습니다! 분명히 그곳은 붐비고 있을 겁니다!"
   commands:
     admin:

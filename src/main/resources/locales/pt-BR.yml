@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Seu território se expandiu devido a um novo membro!"
     team-decrease-owner: "&b Seu território ficou menor, pois um membro da equipe saiu."
     team-increase: "&a Este território se expandiu devido a um novo membro!"
-    team-decrease-owner: "&b Este território ficou menor, pois um membro da equipe saiu."
+    team-decrease: "&b Este território ficou menor, pois um membro da equipe saiu."
     team-no-change: "&d O tamanho do território não pôde ser expandido! Deve estar lotado por lá!"
   commands:
     admin:

@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Je claim is uitgebreid dankzij een nieuw lid!"
     team-decrease-owner: "&b Je claim is kleiner geworden doordat een teamlid is vertrokken."
     team-increase: "&a Deze claim is uitgebreid dankzij een nieuw lid!"
-    team-decrease-owner: "&b Deze claim is kleiner geworden doordat een teamlid is vertrokken."
+    team-decrease: "&b Deze claim is kleiner geworden doordat een teamlid is vertrokken."
     team-no-change: "&d Claimgrootte kon niet worden uitgebreid! Het moet wel druk zijn daarbuiten!"
   commands:
     admin:

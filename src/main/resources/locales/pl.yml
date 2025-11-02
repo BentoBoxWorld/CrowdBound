@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Twój teren powiększył się dzięki nowemu członkowi!"
     team-decrease-owner: "&b Twój teren jest mniejszy, ponieważ jeden z członków zespołu odszedł."
     team-increase: "&a Ten teren powiększył się dzięki nowemu członkowi!"
-    team-decrease-owner: "&b Ten teren jest mniejszy, ponieważ jeden z członków zespołu odszedł."
+    team-decrease: "&b Ten teren jest mniejszy, ponieważ jeden z członków zespołu odszedł."
     team-no-change: "&d Rozmiar terenu nie mógł zostać powiększony! Musi być tam tłoczno!"
   commands:
     admin:

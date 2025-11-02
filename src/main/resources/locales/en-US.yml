@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Your claim expanded due to a new member!"
     team-decrease-owner: "&b Your claim is smaller as a team member left."
     team-increase: "&a This claim expanded due to a new member!"
-    team-decrease-owner: "&b This claim is smaller as a team member left."
+    team-decrease: "&b This claim is smaller as a team member left."
     team-no-change: "&d Claim size could not be expanded! Must be crowded out there!"
   commands:
     admin:

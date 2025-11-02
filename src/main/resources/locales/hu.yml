@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a A területetek bővült egy új tag miatt!"
     team-decrease-owner: "&b A területetek kisebb lett, mivel egy csapattag távozott."
     team-increase: "&a Ez a terület bővült egy új tag miatt!"
-    team-decrease-owner: "&b Ez a terület kisebb lett, mivel egy csapattag távozott."
+    team-decrease: "&b Ez a terület kisebb lett, mivel egy csapattag távozott."
     team-no-change: "&d A terület mérete nem bővülhetett! Biztosan zsúfolt odakint!"
   commands:
     admin:

@@ -17,6 +17,7 @@ import org.bukkit.World.Environment;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
+import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Fence;
 import org.bukkit.block.data.type.Slab;
@@ -221,7 +222,7 @@ public class NetherChunkMaker implements Listener {
         int chestFills = 0;
 
         // Loop through the chunk and set blocks
-        for (int y = e.getWorld().getMinHeight(); y < ROOF_HEIGHT; y++) {
+        for (int y = e.getWorld().getMinHeight() + 8; y < ROOF_HEIGHT; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     Block overworldBlock = overworldChunk.getBlock(x, y, z);
@@ -327,14 +328,20 @@ public class NetherChunkMaker implements Listener {
                     } else if (newBlock.getType() == Material.OBSIDIAN) {
                         newBlockData = Material.OBSIDIAN.createBlockData();
                     }
-                    // --- Individual Block Conversion (Switch Statement) ---
-
+                    // Individual Block Conversion 
                     else { // Only proceed to switch if no Tag conversion was applied
 
                         switch (material) {
                         case AIR:
                             // Nothing to do here
                             break;
+                        case BELL, ENCHANTING_TABLE, LECTERN:
+                            // Turn into a spawner
+                            newBlockData = Material.SPAWNER.createBlockData();
+                            if (newBlockData instanceof CreatureSpawner spawnerData) {
+                                spawnerData.setSpawnedType(EntityType.BLAZE); // Set the type
+                            }
+                            break;                          
                         case GRASS_BLOCK:
                             newBlockData = rand.nextDouble() < 0.2 ? Material.SOUL_SOIL.createBlockData() : Material.NETHERRACK.createBlockData();
                             break;

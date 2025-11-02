@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Jūsu apgabals tika paplašināts jauna biedra dēļ!"
     team-decrease-owner: "&b Jūsu apgabals ir mazāks, jo komandas biedrs ir aizgājis."
     team-increase: "&a Šis apgabals tika paplašināts jauna biedra dēļ!"
-    team-decrease-owner: "&b Šis apgabals ir mazāks, jo komandas biedrs ir aizgājis."
+    team-decrease: "&b Šis apgabals ir mazāks, jo komandas biedrs ir aizgājis."
     team-no-change: "&d Apgabala izmēru nevarēja paplašināt! Tur ārā droši vien ir liels drūzma!"
   commands:
     admin:

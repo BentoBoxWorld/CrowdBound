@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Vaše se područje proširilo zbog novog člana!"
     team-decrease-owner: "&b Vaše je područje manje jer je član tima otišao."
     team-increase: "&a Ovo se područje proširilo zbog novog člana!"
-    team-decrease-owner: "&b Ovo je područje manje jer je član tima otišao."
+    team-decrease: "&b Ovo je područje manje jer je član tima otišao."
     team-no-change: "&d Veličina područja nije mogla biti proširena! Sigurno je gužva vani!"
   commands:
     admin:

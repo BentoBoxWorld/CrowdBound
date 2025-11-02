@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Bölgeniz yeni bir üye sayesinde genişledi!"
     team-decrease-owner: "&b Bir ekip üyesi ayrıldığı için bölgeniz küçüldü."
     team-increase: "&a Bu bölge yeni bir üye sayesinde genişledi!"
-    team-decrease-owner: "&b Bu bölge bir ekip üyesi ayrıldığı için küçüldü."
+    team-decrease: "&b Bu bölge bir ekip üyesi ayrıldığı için küçüldü."
     team-no-change: "&d Bölge boyutu genişletilemedi! Dışarısı çok kalabalık olmalı!"
   commands:
     admin:

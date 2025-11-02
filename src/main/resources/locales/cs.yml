@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Tvé území se rozšířilo díky novému členovi!"
     team-decrease-owner: "&b Tvé území je menší, protože jeden člen týmu odešel."
     team-increase: "&a Toto území se rozšířilo díky novému členovi!"
-    team-decrease-owner: "&b Toto území je menší, protože jeden člen týmu odešel."
+    team-decrease: "&b Toto území je menší, protože jeden člen týmu odešel."
     team-no-change: "&d Velikost území nemohla být rozšířena! Tam venku musí být pořádná tlačenice!"
   commands:
     admin:

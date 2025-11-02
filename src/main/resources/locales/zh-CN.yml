@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a 由于新成员加入，你的领地扩大了！"
     team-decrease-owner: "&b 由于一名团队成员离开，你的领地变小了。"
     team-increase: "&a 由于新成员加入，此领地扩大了！"
-    team-decrease-owner: "&b 由于一名团队成员离开，此领地变小了。"
+    team-decrease: "&b 由于一名团队成员离开，此领地变小了。"
     team-no-change: "&d 领地大小未能扩大！外面一定很拥挤！"
   commands:
     admin:

@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a Reclamația ta s-a extins datorită unui nou membru!"
     team-decrease-owner: "&b Reclamația ta este mai mică deoarece un membru al echipei a plecat."
     team-increase: "&a Această reclamație s-a extins datorită unui nou membru!"
-    team-decrease-owner: "&b Această reclamație este mai mică deoarece un membru al echipei a plecat."
+    team-decrease: "&b Această reclamație este mai mică deoarece un membru al echipei a plecat."
     team-no-change: "&d Dimensiunea reclamației nu a putut fi extinsă! Trebuie să fie aglomerat acolo!"
   commands:
     admin:

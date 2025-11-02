@@ -23,7 +23,7 @@ crowdbound:
     team-increase-owner: "&a 新しいメンバーにより、あなたのクレームが拡大しました！"
     team-decrease-owner: "&b チームメンバーが去ったため、あなたのクレームは縮小しました。"
     team-increase: "&a 新しいメンバーにより、このクレームが拡大しました！"
-    team-decrease-owner: "&b チームメンバーが去ったため、このクレームは縮小しました。"
+    team-decrease: "&b チームメンバーが去ったため、このクレームは縮小しました。"
     team-no-change: "&d クレームのサイズは拡大できませんでした！そこは混雑しているに違いありません！"
   commands:
     admin:
