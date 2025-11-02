@@ -10,7 +10,7 @@ import world.bentobox.bentobox.api.user.User;
  *
  */
 public interface BorderShower {
-    public static final String BORDER_STATE_META_DATA = "Border_state";
+    public static final String BORDER_STATE_META_DATA = "Crowdbound_border_state";
 
     /**
      * Show the barrier to the player
