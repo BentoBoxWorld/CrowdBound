@@ -148,10 +148,10 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.nether.upsidedown.attrition")
     private int attrition = 5;
     
-    @ConfigComment("Maximum number of chests to fill in a chunk. Default is 1.")
-    @ConfigComment("Chests get filled with random nether loot")
+    @ConfigComment("Maximum number of chests to fill in a chunk. Default is 3, unlimited is -1.")
+    @ConfigComment("Chests get filled with random loot.")
     @ConfigEntry(path = "world.nether.upsidedown.chest-fills")
-    private int chestFills = 1;
+    private int chestFills = 3;
 
     // End
     @ConfigComment("End World - if this is false, the end world will not be made and access to")
@@ -1252,7 +1252,7 @@ public class Settings implements WorldSettings {
      */
     @Override
     public boolean isMakeNetherPortals() {
-        return false;
+        return true;
     }
 
     /**

@@ -76,7 +76,7 @@ world:
       attrition: 5
       # Maximum number of chests to fill in a chunk. Default is 1.
       # Chests get filled with random nether loot
-      chest-fills: 1
+      chest-fills: 3
   end:
     # End World - if this is false, the end world will not be made and access to
     # the end will not occur. Other plugins may still enable portal usage.

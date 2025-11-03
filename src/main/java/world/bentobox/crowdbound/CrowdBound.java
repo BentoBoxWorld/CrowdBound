@@ -61,6 +61,7 @@ public class CrowdBound extends GameModeAddon {
     private int borderSize;
     private @NotNull BukkitTask task;
     private PlayerListener playerListener;
+    private NetherChunkMaker netherChunkMaker;
 
     @Override
     public boolean isFixIslandCenter() {
@@ -78,7 +79,9 @@ public class CrowdBound extends GameModeAddon {
         saveDefaultConfig();
         // Load settings from config.yml. This will check if there are any issues with it too.
         loadSettings();
-
+        // Create the nether chunk listener; set it up in onEnable
+        netherChunkMaker = new NetherChunkMaker(this);
+        
         // Register commands
         playerCommand = new DefaultPlayerCommand(this) {
             @Override
@@ -126,7 +129,7 @@ public class CrowdBound extends GameModeAddon {
         borderShower = this.createBorder();
         playerListener = new PlayerListener(this);
         this.registerListener(playerListener);
-        this.registerListener(new NetherChunkMaker(this));
+        this.registerListener(netherChunkMaker);
         this.registerListener(new TeamListener(this));
         
         // Register recipe for warped compass
@@ -171,6 +174,10 @@ public class CrowdBound extends GameModeAddon {
 
         // Make the nether if it does not exist
         if (settings.isNetherGenerate()) {
+            if (Bukkit.getWorld(worldName + NETHER) == null) {
+                // New world, or cleared
+                netherChunkMaker.clearDatabase();
+            }
             netherWorld = getWorld(worldName, World.Environment.NETHER);
         }
         // Make the end if it does not exist

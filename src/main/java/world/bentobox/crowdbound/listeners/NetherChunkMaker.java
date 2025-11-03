@@ -1,6 +1,11 @@
 package world.bentobox.crowdbound.listeners;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -16,9 +21,11 @@ import org.bukkit.Tag;
 import org.bukkit.World.Environment;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.data.type.Fence;
 import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Stairs;
@@ -35,7 +42,9 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
+import org.bukkit.util.BoundingBox;
 
+import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.bentobox.util.ExpiringSet;
@@ -58,6 +67,41 @@ public class NetherChunkMaker implements Listener {
     private ExpiringSet<UUID> portalPlayer = new ExpiringSet<>(10, TimeUnit.SECONDS);
     private final TreeMap<Integer, LootTable> chestContents;
 
+    // Overworld Biome -> Nether Biome
+    public static final Map<Biome, Biome> BIOME_MAPPING;
+    static {
+        Map<Biome, Biome> biomeMap = new HashMap<>();
+        // Lush/Jungle/Wetlands (Crimson)
+        biomeMap.put(Biome.SWAMP, Biome.CRIMSON_FOREST);
+        biomeMap.put(Biome.MANGROVE_SWAMP, Biome.CRIMSON_FOREST);
+        biomeMap.put(Biome.JUNGLE, Biome.CRIMSON_FOREST);
+        biomeMap.put(Biome.BAMBOO_JUNGLE, Biome.CRIMSON_FOREST);
+        biomeMap.put(Biome.DARK_FOREST, Biome.CRIMSON_FOREST);
+
+        // Hot/Dry/Mountainous (Basalt)
+        biomeMap.put(Biome.DESERT, Biome.BASALT_DELTAS);
+        biomeMap.put( Biome.SAVANNA_PLATEAU, Biome.BASALT_DELTAS);
+        biomeMap.put(Biome.BADLANDS, Biome.BASALT_DELTAS);
+        biomeMap.put(Biome.JAGGED_PEAKS, Biome.BASALT_DELTAS);
+        biomeMap.put(Biome.STONY_PEAKS, Biome.BASALT_DELTAS);
+
+        // Cold/Snowy (Soul Sand)
+        biomeMap.put(Biome.SNOWY_PLAINS, Biome.SOUL_SAND_VALLEY);
+        biomeMap.put(Biome.TAIGA, Biome.SOUL_SAND_VALLEY);
+        biomeMap.put( Biome.ICE_SPIKES, Biome.SOUL_SAND_VALLEY);
+        biomeMap.put(Biome.GROVE, Biome.SOUL_SAND_VALLEY);
+
+        // Unique (Warped)
+        biomeMap.put(Biome.MUSHROOM_FIELDS, Biome.WARPED_FOREST);
+        biomeMap.put(Biome.CHERRY_GROVE, Biome.WARPED_FOREST);
+
+        // Special
+        biomeMap.put(Biome.DEEP_DARK, Biome.BASALT_DELTAS);
+
+
+        BIOME_MAPPING = Collections.unmodifiableMap(biomeMap);
+    }
+
     public NetherChunkMaker(CrowdBound addon) {
         super();
         this.addon = addon;
@@ -76,6 +120,15 @@ public class NetherChunkMaker implements Listener {
         chestContents.put(4, LootTables.NETHER_BRIDGE.getLootTable()); // Uncommon
         chestContents.put(9, LootTables.GHAST.getLootTable()); // Common
         chestContents.put(14, LootTables.PIGLIN_BARTERING.getLootTable()); // Common
+    }
+
+    /**
+     * Clears the database of chunks made. Called if the world doesn't exist, e.g., admin deleted it manually
+     */
+    public void clearDatabase() {
+        if (handler.objectExists(NETHER_CHUNKS_TABLE)) {
+            handler.deleteID(NETHER_CHUNKS_TABLE);
+        }
     }
 
     /**
@@ -221,205 +274,261 @@ public class NetherChunkMaker implements Listener {
         // Count chests
         int chestFills = 0;
 
+        // Check for structures
+        List<BoundingBox> structures = new ArrayList<>();
+        e.getChunk().getStructures().forEach(gs -> structures.add(gs.getBoundingBox()));
+
         // Loop through the chunk and set blocks
         for (int y = e.getWorld().getMinHeight() + 8; y < ROOF_HEIGHT; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     Block overworldBlock = overworldChunk.getBlock(x, y, z);
                     Block newBlock = e.getChunk().getBlock(x, y, z);
-                    newBlock.setBiome(Biome.BASALT_DELTAS); // Set biome for the new block
+                    newBlock.setBiome(BIOME_MAPPING.getOrDefault(overworldBlock.getBiome(), Biome.NETHER_WASTES)); // Set biome for the new block
                     if (overworldBlock.getType() == newBlock.getType() 
                             || newBlock.getType() == Material.NETHER_PORTAL // We must not touch these otherwise errors occur
-                            || y > 100 && rand.nextDouble() < attrition) {
+                            || y > 100 && rand.nextDouble() < attrition
+                            || (inStructure(e.getChunk().getX(), e.getChunk().getZ(), x, y, z, structures) && (newBlock.getType() == Material.NETHER_BRICKS
+                            || newBlock.getType() == Material.NETHER_BRICK_FENCE
+                            || newBlock.getType() == Material.NETHER_BRICK_SLAB
+                            || newBlock.getType() == Material.NETHER_BRICK_STAIRS
+                            || newBlock.getType() == Material.NETHER_BRICK_WALL
+                            || newBlock.getType() == Material.CHISELED_NETHER_BRICKS
+                            || newBlock.getType() == Material.CRACKED_NETHER_BRICKS
+                            || newBlock.getType() == Material.BONE_BLOCK
+                            || newBlock.getType() == Material.SPAWNER
+                            || newBlock.getType() == Material.CHEST))            
+                            ) {
                         continue; // Skip if the block types are the same or if conditions are met
                     }
                     BlockData overworldBlockData = overworldBlock.getBlockData();
                     Material material = overworldBlockData.getMaterial(); // Get the material for the switch
                     BlockData newBlockData = overworldBlockData.clone(); // Clone the BlockData to modify it
 
-                    // --- Tag-Based Conversion ---
-                    // Convert blocks based on their tags
-                    if (Tag.BUTTONS.isTagged(material)) {
-                        newBlockData = rand.nextBoolean() ? Material.AIR.createBlockData() : Material.STONE_BUTTON.createBlockData(); // Converts all buttons to stone
-                    } else if (Tag.DOORS.isTagged(material) || Tag.FENCE_GATES.isTagged(material)) {
-                        newBlockData = Material.AIR.createBlockData(); // Converts all doors to air
-                    } else if (Tag.CORAL_BLOCKS.isTagged(material)) {
-                        newBlockData = Material.NETHERRACK.createBlockData(); // Converts all coral blocks to netherrack
-                    } else if (Tag.LOGS.isTagged(material)) {
-                        newBlockData = Material.WARPED_STEM.createBlockData(); // Converts all overworld logs to Warped Stem
-                        e.getChunk().getBlock(x, y, z).setBiome(Biome.WARPED_FOREST);
-                    } else if (Tag.LEAVES.isTagged(material)) {
-                        newBlockData = Material.NETHER_WART_BLOCK.createBlockData(); // Converts all overworld leaves to Nether Wart Block
-                    } else if (Tag.STONE_BRICKS.isTagged(material)) {
-                        newBlockData = rand.nextBoolean() ? Material.AIR.createBlockData() : Material.NETHER_BRICKS.createBlockData(); // Converts all stone bricks to Nether Bricks
-                    } else if (Tag.SAND.isTagged(material)) {
-                        newBlockData = Material.SOUL_SAND.createBlockData(); // Converts all types of sand to Soul Sand
-                        e.getChunk().getBlock(x, y, z).setBiome(Biome.SOUL_SAND_VALLEY);
-                    } else if (Tag.DIRT.isTagged(material)) {
-                        newBlockData = Material.NETHERRACK.createBlockData(); // Converts all dirt/grass-like blocks to Netherrack
-                    } else if (Tag.FLOWERS.isTagged(material) || Tag.SAPLINGS.isTagged(material)) {
-                        newBlockData = Material.CRIMSON_ROOTS.createBlockData(); // Converts flowers/saplings to Crimson Roots
-                        e.getChunk().getBlock(x, y, z).setBiome(Biome.CRIMSON_FOREST);
-                    } else if (Tag.COAL_ORES.isTagged(material) || Tag.IRON_ORES.isTagged(material) || Tag.GOLD_ORES.isTagged(material)) {
-                        // Converts overworld ores to their Nether equivalent (or just a common Nether block)
-                        newBlockData = Material.NETHER_GOLD_ORE.createBlockData(); // Example conversion
-                    } else if (Tag.CROPS.isTagged(material)) {
-                        newBlockData = Material.NETHER_WART.createBlockData();
-                        e.getChunk().getBlock(x, Math.max(y-1, e.getWorld().getMinHeight()), z).setType(Material.SOUL_SAND);
-                    } else if (Tag.BANNERS.isTagged(material)) {
-                        newBlockData = Material.BLACK_BANNER.createBlockData();
-                    } else if (Tag.TRAPDOORS.isTagged(material)) {
-                        newBlockData = Material.WARPED_TRAPDOOR.createBlockData();
-                    } else if (Tag.BADLANDS_TERRACOTTA.isTagged(material)) {
-                        newBlockData = Material.NETHER_BRICKS.createBlockData();
-                    } else if(Tag.ALL_HANGING_SIGNS.isTagged(material)) {
-                        newBlockData = Material.WARPED_HANGING_SIGN.createBlockData();
-                    } else if(Tag.ALL_SIGNS.isTagged(material)) {
-                        newBlockData = Material.WARPED_SIGN.createBlockData();
-                    } else if(Tag.ANVIL.isTagged(material)) {
-                        newBlockData = Material.CRACKED_POLISHED_BLACKSTONE_BRICKS.createBlockData();
-                    } else if(Tag.CAMPFIRES.isTagged(material)) {
-                        newBlockData = Material.SOUL_CAMPFIRE.createBlockData();
-                    } else if(Tag.CANDLE_CAKES.isTagged(material)) {
-                        newBlockData = Material.WARPED_HYPHAE.createBlockData();
-                    } else if(Tag.COAL_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_QUARTZ_ORE.createBlockData();
-                    } else if(Tag.COPPER_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_QUARTZ_ORE.createBlockData();
-                    } else if(Tag.DIAMOND_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
-                    } else if (Tag.EMERALD_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
-                    } else if (Tag.GOLD_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
-                    } else if (Tag.IRON_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
-                    } else if (Tag.LAPIS_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
-                    } else if (Tag.REDSTONE_ORES.isTagged(material)) {
-                        newBlockData = Material.NETHER_QUARTZ_ORE.createBlockData();
-                    } else if (Tag.BEDS.isTagged(material)) {
-                        newBlockData = Material.GLOWSTONE.createBlockData();
-                    } else if (Tag.BEEHIVES.isTagged(material)) {
-                        newBlockData = Material.GLOWSTONE.createBlockData();
-                    } else if (Tag.BARS.isTagged(material)) {
-                        newBlockData = Material.IRON_BARS.createBlockData();
-                    } else if (Tag.CAVE_VINES.isTagged(material)) {
-                        newBlockData = Material.GLOWSTONE.createBlockData();
-                    } else if (Tag.CAULDRONS.isTagged(material)) {
-                        if (rand.nextBoolean()) {
-                            newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.CAULDRON.createBlockData();
-                        } else {
-                            newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.LAVA_CAULDRON.createBlockData();
-                        }
-                    } else if (Tag.COPPER_CHESTS.isTagged(material)) {
-                        newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() : Material.OXIDIZED_COPPER_CHEST.createBlockData();
-
-                    }  else if (Tag.FENCES.isTagged(material)) {
-                        newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.NETHER_BRICK_FENCE.createBlockData();
-                    } else if (Tag.SLABS.isTagged(material)) {
-                        newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.NETHER_BRICK_SLAB.createBlockData();
-                    } else if (Tag.STAIRS.isTagged(material)) {
-
-                        newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() : Material.NETHER_BRICK_STAIRS.createBlockData() ;
-
-                    } else if (Tag.WALLS.isTagged(material)) {
-                        newBlockData = rand.nextDouble() < 0.1 ? Material.AIR .createBlockData() :  Material.NETHER_BRICK_WALL.createBlockData();
-                    } else if (newBlock.getType() == Material.OBSIDIAN) {
-                        newBlockData = Material.OBSIDIAN.createBlockData();
+                    if (newBlockData instanceof Waterlogged waterlogged) {
+                        waterlogged.setWaterlogged(false);
                     }
-                    // Individual Block Conversion 
-                    else { // Only proceed to switch if no Tag conversion was applied
 
-                        switch (material) {
-                        case AIR:
-                            // Nothing to do here
-                            break;
-                        case BELL, ENCHANTING_TABLE, LECTERN:
-                            // Turn into a spawner
-                            newBlockData = Material.SPAWNER.createBlockData();
-                            if (newBlockData instanceof CreatureSpawner spawnerData) {
-                                spawnerData.setSpawnedType(EntityType.BLAZE); // Set the type
-                            }
-                            break;                          
-                        case GRASS_BLOCK:
-                            newBlockData = rand.nextDouble() < 0.2 ? Material.SOUL_SOIL.createBlockData() : Material.NETHERRACK.createBlockData();
-                            break;
-                        case NETHER_PORTAL:
-                            if (e.getChunk().getBlock(x, y, z).getType() == Material.NETHER_PORTAL) {
-                                newBlockData = Material.NETHER_PORTAL.createBlockData();
+                    // Biome
+                    if (overworldBlock.getBiome() == Biome.DEEP_DARK) {
+                        // Replicate the creepy deep dark
+                    } else 
+                        // --- Tag-Based Conversion ---
+                        // Convert blocks based on their tags
+                        if (Tag.BUTTONS.isTagged(material)) {
+                            newBlockData = rand.nextBoolean() ? Material.AIR.createBlockData() : Material.STONE_BUTTON.createBlockData(); // Converts all buttons to stone
+                        } else if (Tag.DOORS.isTagged(material) || Tag.FENCE_GATES.isTagged(material)) {
+                            newBlockData = Material.AIR.createBlockData(); // Converts all doors to air
+                        } else if (Tag.CORAL_BLOCKS.isTagged(material)) {
+                            newBlockData = Material.NETHERRACK.createBlockData(); // Converts all coral blocks to netherrack
+                        } else if (Tag.LOGS.isTagged(material)) {
+                            if (newBlock.getBiome() == Biome.CRIMSON_FOREST) {
+                                newBlockData = Material.CRIMSON_STEM.createBlockData(); // Converts all overworld logs to Warped Stem
                             } else {
-                                newBlockData = Material.AIR.createBlockData();
+                                newBlockData = Material.WARPED_STEM.createBlockData(); // Converts all overworld logs to Warped Stem
+                                e.getChunk().getBlock(x, y, z).setBiome(Biome.WARPED_FOREST);
                             }
-                            break;
-                        case OBSIDIAN:
-                            // Set Obi to air
-                            newBlockData = Material.AIR.createBlockData();
-                            break;
-                        case HAY_BLOCK:
+                        } else if (Tag.LEAVES.isTagged(material)) {
+                            if (newBlock.getBiome() == Biome.CRIMSON_FOREST) {
+                                newBlockData = Material.WARPED_WART_BLOCK.createBlockData(); // Converts all overworld leaves to Nether Wart Block
+                            } else {
+                                newBlockData = Material.NETHER_WART_BLOCK.createBlockData(); // Converts all overworld leaves to Nether Wart Block
+                            }
+                        } else if (Tag.STONE_BRICKS.isTagged(material)) {
+                            newBlockData = rand.nextBoolean() ? Material.AIR.createBlockData() : Material.NETHER_BRICKS.createBlockData(); // Converts all stone bricks to Nether Bricks
+                        } else if (Tag.SAND.isTagged(material)) {
+                            newBlockData = Material.SOUL_SAND.createBlockData(); // Converts all types of sand to Soul Sand
+                            e.getChunk().getBlock(x, y, z).setBiome(Biome.SOUL_SAND_VALLEY);
+                        } else if (Tag.DIRT.isTagged(material)) {
+                            newBlockData = Material.NETHERRACK.createBlockData(); // Converts all dirt/grass-like blocks to Netherrack
+                        } else if (Tag.FLOWERS.isTagged(material) || Tag.SAPLINGS.isTagged(material)) {
+                            if (newBlock.getBiome() == Biome.CRIMSON_FOREST) {
+                                newBlockData = rand.nextDouble() < 0.2 ? newBlockData = Material.CRIMSON_FUNGUS.createBlockData() : Material.CRIMSON_ROOTS.createBlockData(); // Converts flowers/saplings to Crimson Roots
+                            } else if (newBlock.getBiome() == Biome.WARPED_FOREST) {
+                                newBlockData = rand.nextDouble() < 0.2 ? newBlockData = Material.WARPED_FUNGUS.createBlockData() : Material.WARPED_ROOTS.createBlockData(); // Converts flowers/saplings to Warped Roots
+                            } else {
+                                newBlockData = rand.nextBoolean() ? Material.RED_MUSHROOM.createBlockData() : Material.BROWN_MUSHROOM.createBlockData();
+                            }
+                        } else if (Tag.COAL_ORES.isTagged(material) || Tag.IRON_ORES.isTagged(material) || Tag.GOLD_ORES.isTagged(material)) {
+                            // Converts overworld ores to their Nether equivalent (or just a common Nether block)
+                            newBlockData = Material.NETHER_GOLD_ORE.createBlockData(); // Example conversion
+                        } else if (Tag.CROPS.isTagged(material)) {
+                            newBlockData = Material.NETHER_WART.createBlockData();
+                            e.getChunk().getBlock(x, Math.max(y-1, e.getWorld().getMinHeight()), z).setType(Material.SOUL_SAND);
+                        } else if (Tag.BANNERS.isTagged(material)) {
+                            newBlockData = Material.BLACK_BANNER.createBlockData();
+                        } else if (Tag.TRAPDOORS.isTagged(material)) {
+                            newBlockData = Material.WARPED_TRAPDOOR.createBlockData();
+                        } else if (Tag.BADLANDS_TERRACOTTA.isTagged(material)) {
+                            newBlockData = Material.NETHER_BRICKS.createBlockData();
+                        } else if(Tag.ALL_HANGING_SIGNS.isTagged(material)) {
+                            newBlockData = Material.WARPED_HANGING_SIGN.createBlockData();
+                        } else if(Tag.ALL_SIGNS.isTagged(material)) {
+                            newBlockData = Material.WARPED_SIGN.createBlockData();
+                        } else if(Tag.ANVIL.isTagged(material)) {
+                            newBlockData = Material.CRACKED_POLISHED_BLACKSTONE_BRICKS.createBlockData();
+                        } else if(Tag.CAMPFIRES.isTagged(material)) {
+                            newBlockData = Material.SOUL_CAMPFIRE.createBlockData();
+                        } else if(Tag.CANDLE_CAKES.isTagged(material)) {
+                            newBlockData = Material.WARPED_HYPHAE.createBlockData();
+                        } else if(Tag.COAL_ORES.isTagged(material)) {
+                            newBlockData = Material.NETHER_QUARTZ_ORE.createBlockData();
+                        } else if(Tag.COPPER_ORES.isTagged(material)) {
+                            newBlockData = Material.NETHER_QUARTZ_ORE.createBlockData();
+                        } else if(Tag.DIAMOND_ORES.isTagged(material)) {
+                            newBlockData = Material.ANCIENT_DEBRIS.createBlockData();
+                        } else if (Tag.EMERALD_ORES.isTagged(material)) {
+                            newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
+                        } else if (Tag.GOLD_ORES.isTagged(material)) {
+                            newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
+                        } else if (Tag.IRON_ORES.isTagged(material)) {
+                            newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
+                        } else if (Tag.LAPIS_ORES.isTagged(material)) {
+                            newBlockData = Material.NETHER_GOLD_ORE.createBlockData();
+                        } else if (Tag.REDSTONE_ORES.isTagged(material)) {
+                            newBlockData = Material.NETHER_QUARTZ_ORE.createBlockData();
+                        } else if (Tag.BEDS.isTagged(material)) {
                             newBlockData = Material.GLOWSTONE.createBlockData();
-                            break;
-                        case GRAVEL:
-                            break;
-                        case ANDESITE:
-                            newBlockData = Material.SOUL_SOIL.createBlockData();
-                            break;
-                        case DIORITE:
-                        case GRANITE:
-                            newBlockData = Material.BASALT.createBlockData();
-                            break;
-                        case STONE:
-                        case BUBBLE_COLUMN:
-                            newBlockData = Material.NETHERRACK.createBlockData();
-                            break;
-                        case KELP:
-                        case SEAGRASS:
-                            newBlockData = Material.MAGMA_BLOCK.createBlockData();
-                            break;
-                        case WATER:
-                            // The Nether is hot! Convert water/kelp etc. to lava.
-                            newBlockData = Material.LAVA.createBlockData();
-                            break;
-                        case LAVA:
-                            // Keep lava as lava
-                            break;
-                        case TORCH:
-                        case WALL_TORCH:
-                            // Convert to a more intense light source
-                            newBlockData = Material.SOUL_TORCH.createBlockData();
-                            break;
-                        case COBBLESTONE:
-                            newBlockData = Material.BASALT.createBlockData();
-                            break;
-                        case TALL_GRASS:
-                            newBlockData = Material.AIR.createBlockData();
-                            break;
-                        case SHORT_GRASS:
-                        case SHORT_DRY_GRASS:
-                            if (rand.nextDouble() < 0.1) {
-                                newBlockData = Material.FIRE.createBlockData();
+                        } else if (Tag.BEEHIVES.isTagged(material)) {
+                            newBlockData = Material.GLOWSTONE.createBlockData();
+                        } else if (Tag.BARS.isTagged(material)) {
+                            newBlockData = Material.IRON_BARS.createBlockData();
+                        } else if (Tag.CAVE_VINES.isTagged(material)) {
+                            newBlockData = Material.GLOWSTONE.createBlockData();
+                        } else if (Tag.CAULDRONS.isTagged(material)) {
+                            if (rand.nextBoolean()) {
+                                newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.CAULDRON.createBlockData();
                             } else {
-                                newBlockData = Material.AIR.createBlockData();
+                                newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.LAVA_CAULDRON.createBlockData();
                             }
-                            break;
-                        case GLASS:
-                        case GLASS_PANE:
-                            // Convert to a dark, smoky pane
-                            newBlockData = Material.BLACK_STAINED_GLASS_PANE.createBlockData();
-                            break;
-                        case BEDROCK:
-                            // Bedrock remains bedrock
-                            break;
-                        case BRICKS:
-                            newBlockData = Material.NETHER_BRICK.createBlockData();
-                            break;
-                        case CHEST:
-                            break;
-                        default:
-                            newBlockData = Material.BLACKSTONE.createBlockData();
-                            break;
+                        } else if (Tag.COPPER_CHESTS.isTagged(material)) {
+                            newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() : Material.OXIDIZED_COPPER_CHEST.createBlockData();
+
+                        }  else if (Tag.FENCES.isTagged(material)) {
+                            newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.NETHER_BRICK_FENCE.createBlockData();
+                        } else if (Tag.SLABS.isTagged(material)) {
+                            newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() :Material.NETHER_BRICK_SLAB.createBlockData();
+                        } else if (Tag.STAIRS.isTagged(material)) {
+
+                            newBlockData = rand.nextDouble() < attrition ? Material.AIR.createBlockData() : Material.NETHER_BRICK_STAIRS.createBlockData() ;
+
+                        } else if (Tag.WALLS.isTagged(material)) {
+                            newBlockData = rand.nextDouble() < 0.1 ? Material.AIR .createBlockData() :  Material.NETHER_BRICK_WALL.createBlockData();
+                        } else if (newBlock.getType() == Material.OBSIDIAN) {
+                            newBlockData = Material.OBSIDIAN.createBlockData();
                         }
-                    }
+                    // Individual Block Conversion 
+                        else { // Only proceed to switch if no Tag conversion was applied
+                            switch (material) {
+                            case AIR:
+                                // Nothing to do here
+                                break;
+                            case BELL, ENCHANTING_TABLE, LECTERN:
+                                // Turn into a spawner
+                                newBlockData = Material.SPAWNER.createBlockData();
+                            break;                          
+                            case GRASS_BLOCK:
+                                if (newBlock.getBiome() == Biome.WARPED_FOREST) {
+                                    newBlockData = Material.WARPED_NYLIUM.createBlockData();
+                                } else if (newBlock.getBiome() == Biome.CRIMSON_FOREST) {
+                                    newBlockData = Material.CRIMSON_NYLIUM.createBlockData();
+                                } else if (newBlock.getBiome() == Biome.SOUL_SAND_VALLEY) {
+                                    newBlockData = rand.nextDouble() < 0.2 ? Material.SOUL_SOIL.createBlockData() : Material.SOUL_SAND.createBlockData();
+                                } else {
+                                    newBlockData = rand.nextDouble() < 0.2 ? Material.SOUL_SOIL.createBlockData() : Material.NETHERRACK.createBlockData();
+                                }
+                                break;
+                            case NETHER_PORTAL:
+                                if (e.getChunk().getBlock(x, y, z).getType() == Material.NETHER_PORTAL) {
+                                    newBlockData = Material.NETHER_PORTAL.createBlockData();
+                                } else {
+                                    newBlockData = Material.AIR.createBlockData();
+                                }
+                                break;
+                            case OBSIDIAN:
+                                // Set Obi to air
+                                newBlockData = Material.AIR.createBlockData();
+                                break;
+                            case HAY_BLOCK:
+                                if (newBlock.getBiome() == Biome.CRIMSON_FOREST || newBlock.getBiome() == Biome.WARPED_FOREST ) {
+                                    newBlockData = Material.SHROOMLIGHT.createBlockData();
+                                } else {
+                                    newBlockData = Material.GLOWSTONE.createBlockData();
+                                }
+                                break;
+                            case GRAVEL, RED_MUSHROOM, BROWN_MUSHROOM:
+                                break;
+                            case ANDESITE:
+                                newBlockData = Material.SOUL_SOIL.createBlockData();
+                                break;
+                            case DIORITE:
+                            case GRANITE:
+                                newBlockData = Material.BASALT.createBlockData();
+                                break;
+                            case STONE:
+                            case BUBBLE_COLUMN:
+                                newBlockData = Material.NETHERRACK.createBlockData();
+                                break;
+                            case KELP:
+                            case SEAGRASS:
+                                newBlockData = Material.MAGMA_BLOCK.createBlockData();
+                                break;
+                            case WATER:
+                                newBlockData = Material.LAVA.createBlockData();
+                                break;
+                            case LAVA:
+                                // Keep lava as lava
+                                break;
+                            case TORCH:
+                            case WALL_TORCH:
+                                // Convert to a more intense light source
+                                newBlockData = Material.SOUL_TORCH.createBlockData();
+                                break;
+                            case COBBLESTONE:
+                                newBlockData = Material.BASALT.createBlockData();
+                                break;
+                            case TALL_GRASS:
+                                newBlockData = Material.AIR.createBlockData();
+                                break;
+                            case SHORT_GRASS:
+                                if (newBlock.getBiome() == Biome.WARPED_FOREST) {
+                                    newBlockData = Material.NETHER_SPROUTS.createBlockData();
+                                    break;
+                                }
+                            case SHORT_DRY_GRASS:
+                                if (rand.nextDouble() < 0.1) {
+                                    newBlockData = Material.FIRE.createBlockData();
+                                } else {
+                                    newBlockData = Material.AIR.createBlockData();
+                                }
+                                break;
+                            case GLASS:
+                            case GLASS_PANE:
+                                // Convert to a dark, smoky pane
+                                newBlockData = Material.BLACK_STAINED_GLASS_PANE.createBlockData();
+                                break;
+                            case BEDROCK:
+                                // Bedrock remains bedrock
+                                break;
+                            case BRICKS:
+                                newBlockData = Material.NETHER_BRICK.createBlockData();
+                                break;
+                            case CHEST:
+                                break;
+                            case SPAWNER:
+                                break;
+                            case VINE, CAVE_VINES:
+                                if (newBlock.getBiome() == Biome.WARPED_FOREST) {
+                                    newBlockData = Material.WEEPING_VINES.createBlockData();
+                                } else {
+                                    newBlockData = Material.TWISTING_VINES.createBlockData();
+                                }
+                            break;
+                            default:
+                                newBlockData = Material.BLACKSTONE.createBlockData();
+                                break;
+                            }
+                        }
                     // Apply the new BlockData to the shadow world chunk
                     newBlock.setBlockData(newBlockData, false);
 
@@ -433,35 +542,73 @@ public class NetherChunkMaker implements Listener {
                     if (overworldBlockData instanceof Slab slab && newBlockData instanceof Slab newSlab) {
                         newSlab.setType(slab.getType());
                     }
-                    if (newBlock.getState() instanceof Chest chest && chestFills < maxChestFills) {
+                    if (newBlock.getState() instanceof Chest chest && (maxChestFills < 0 || chestFills < maxChestFills)) {
                         chestFills++;
                         // If it's a chest, then put some random stuff in it
-                        populateChest(overworldBlockData, chest, newBlockData);
+                        populateChest(overworldBlock, overworldBlockData, chest, newBlockData);
                     }
                     newBlock.setBlockData(newBlockData, false); // Finalize the block data
+
+                    // Spawner
+                    if (newBlock.getType() == Material.SPAWNER) {
+                        BlockState state = newBlock.getState();
+                        if (state instanceof CreatureSpawner spawner) {
+                            spawner.setSpawnedType(EntityType.BLAZE);
+                            spawner.setDelay(-1); 
+                            spawner.update(true);
+                        }
+                    }
                 }
             }
         }
     }
 
     /**
+     * Checks if a specific block coordinate (relative or absolute) is contained
+     * within any of the provided list of BoundingBoxes.
+     *
+     * @param chunkX The chunk's X-coordinate (multiplied by 16) where the search is centered.
+     * @param chunkZ The chunk's Z-coordinate (multiplied by 16) where the search is centered.
+     * @param x The local X-coordinate (0-15) of the block within the chunk, or the absolute world X-coordinate.
+     * @param y The world Y-coordinate of the block.
+     * @param z The local Z-coordinate (0-15) of the block within the chunk, or the absolute world Z-coordinate.
+     * @param structures A list of BoundingBox objects representing structures.
+     * @return true if the block is inside any structure's bounding box, false otherwise.
+     */
+    private boolean inStructure(int chunkX, int chunkZ, int x, int y, int z, List<BoundingBox> structures) {
+        final double worldX = chunkX * 16 + x;
+        final double worldY = y;
+        final double worldZ = chunkZ * 16 + z;
+
+        for (BoundingBox box : structures) {
+            if (box.contains(worldX, worldY, worldZ)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Populates a chest with loot from a defined LootTable.
+     * @param overworldBlock 
      * @param bd 
      * 
      * @param chest The chest to populate.
      * @param newBlockData 
      */
-    private void populateChest(BlockData bd, Chest chest, BlockData newBlockData) {
+    private void populateChest(Block overworldBlock, BlockData bd, Chest chest, BlockData newBlockData) {
         Location chestLocation = chest.getLocation();
-
-        // Set the loot table
-        // Total weight is 1 + 3 + 5 + 5 = 14
-        int totalWeight = chestContents.lastKey(); 
-        // Generate random number in the range [0, 13]
-        int randomValue = rand.nextInt(totalWeight);
-        // Select the correct loot table
-        chest.setLootTable(chestContents.higherEntry(randomValue).getValue());
-
+        if (overworldBlock.getState() instanceof Chest oldChest && oldChest.getLootTable() != null) {
+            chest.setLootTable(oldChest.getLootTable());
+        } else {
+            // Set the loot table
+            // Total weight is 1 + 3 + 5 + 5 = 14
+            int totalWeight = chestContents.lastKey(); 
+            // Generate random number in the range [0, 13]
+            int randomValue = rand.nextInt(totalWeight);
+            // Select the correct loot table
+            chest.setLootTable(chestContents.higherEntry(randomValue).getValue());
+        }
         // Set a seed so it gets fills on first open.
         chest.getInventory().clear();
         chest.setSeed(System.currentTimeMillis() + chestLocation.hashCode());
