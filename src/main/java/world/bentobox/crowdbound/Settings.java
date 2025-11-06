@@ -92,6 +92,7 @@ public class Settings implements WorldSettings {
     @ConfigEntry(path = "world.barrier-reduction-speed")
     private int barrierReductionSpeed = 10;
     
+    // Regular world settings
     @ConfigComment("Allow structures to generate")
     @ConfigEntry(path = "world.allow-structures")
     private boolean allowStructures = true;
@@ -147,6 +148,11 @@ public class Settings implements WorldSettings {
     @ConfigComment("The UpsideDown is not pretty like the overworld...")
     @ConfigEntry(path = "world.nether.upsidedown.attrition")
     private int attrition = 5;
+    
+    @ConfigComment("Chance that redstone events in the UpsideDown will trigger in the OverWorld.")
+    @ConfigComment("The redstone item or block must exist in the same location in both worlds to be triggered.")
+    @ConfigEntry(path = "world.nether.upsidedown.redstone-chance")
+    private int redstoneChance = 100;
     
     @ConfigComment("Maximum number of chests to fill in a chunk. Default is 3, unlimited is -1.")
     @ConfigComment("Chests get filled with random loot.")
@@ -1461,6 +1467,22 @@ public class Settings implements WorldSettings {
      */
     public void setChestFills(int chestFills) {
         this.chestFills = chestFills;
+    }
+
+    /**
+     * @return the redstoneChance
+     */
+    public int getRedstoneChance() {
+        redstoneChance = Math.clamp(redstoneChance, 0, 100);
+        return redstoneChance;
+    }
+
+    /**
+     * @param redstoneChance the redstoneChance to set
+     */
+    public void setRedstoneChance(int redstoneChance) {
+        redstoneChance = Math.clamp(redstoneChance, 0, 100);
+        this.redstoneChance = redstoneChance;
     }
 
 }

@@ -18,6 +18,7 @@ crowdbound:
     too-close-to-spawn: "&c You are too close to spawn to make a claim. Move further out."
     no-fit-inside: "&c This claim cannot completely fit inside the boundary."
   nether:
+    welcome: "&c Welcome to the Upsidedown! Beware!"
     refresh: "&a Kaboom! The Nether is remade! Your warped compass crumbles in your hand!"
   claim:
     team-increase-owner: "&a Your claim expanded due to a new member!"

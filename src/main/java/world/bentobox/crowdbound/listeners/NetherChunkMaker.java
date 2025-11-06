@@ -37,6 +37,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -44,7 +45,6 @@ import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 import org.bukkit.util.BoundingBox;
 
-import world.bentobox.bentobox.BentoBox;
 import world.bentobox.bentobox.api.user.User;
 import world.bentobox.bentobox.database.Database;
 import world.bentobox.bentobox.util.ExpiringSet;
@@ -157,6 +157,18 @@ public class NetherChunkMaker implements Listener {
                 || CrowdBound.isWarpedCompass(p.getInventory().getItemInOffHand())) {
             // Refresh the Nether chunks
             refreshNetherChunks(p);
+        }
+    }
+    
+    /**
+     * Handles the event when a player enters the UpsideDown.
+     * 
+     * @param e The event triggered
+     */
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onNetherPortalExit(PlayerChangedWorldEvent e) {
+        if (addon.inWorld(e.getPlayer().getWorld())) {
+            User.getInstance(e.getPlayer()).notify(addon.getNetherWorld(), "crowdbound.nether.welcome");
         }
     }
 
@@ -496,7 +508,7 @@ public class NetherChunkMaker implements Listener {
                                     break;
                                 }
                             case SHORT_DRY_GRASS:
-                                if (rand.nextDouble() < 0.1) {
+                                if (rand.nextDouble() < attrition) {
                                     newBlockData = Material.FIRE.createBlockData();
                                 } else {
                                     newBlockData = Material.AIR.createBlockData();
@@ -524,6 +536,12 @@ public class NetherChunkMaker implements Listener {
                                     newBlockData = Material.TWISTING_VINES.createBlockData();
                                 }
                             break;
+                            // Redstone survives, mostly
+                            case REDSTONE_WIRE, REDSTONE_TORCH, REDSTONE_LAMP, REDSTONE_WALL_TORCH, COMPARATOR, LEVER, RAIL, POWERED_RAIL:
+                                if (rand.nextDouble() < attrition) {
+                                    newBlockData = Material.FIRE.createBlockData();
+                                }
+                                break;
                             default:
                                 newBlockData = Material.BLACKSTONE.createBlockData();
                                 break;
@@ -670,8 +688,7 @@ public class NetherChunkMaker implements Listener {
             // A smaller, friendly ground mob, mapped to the aggressive HOGLIN
             yield EntityType.HOGLIN;
         case CAVE_SPIDER:
-            // A smaller, venomous SPIDER, mapped to the smaller, fiery MAGMA_CUBE
-            yield EntityType.MAGMA_CUBE;
+            yield EntityType.CAVE_SPIDER;
         case CHICKEN:
             // A small, passive mob, mapped to the small, aggressive ZOMBIFIED_PIGLIN
             yield EntityType.ZOMBIFIED_PIGLIN;
@@ -802,8 +819,7 @@ public class NetherChunkMaker implements Listener {
             // A ranged, defensive golem, mapped to the ranged BLAZE
             yield EntityType.BLAZE;
         case SPIDER:
-            // A common hostile mob, mapped to the aggressive PIGLIN
-            yield EntityType.PIGLIN;
+            yield EntityType.CAVE_SPIDER;
         case SQUID:
             // An aquatic mob, mapped to the fiery BLAZE
             yield EntityType.BLAZE;
@@ -861,10 +877,11 @@ public class NetherChunkMaker implements Listener {
         case HAPPY_GHAST:
             // Happy Ghasts exist in both dimensions
             yield EntityType.HAPPY_GHAST;
+        case MINECART:
+            yield EntityType.MINECART;
         default:
             // Default for any remaining non-mob entities (projectiles, items) or unknowns
             yield null;
-
         };
     }
 }

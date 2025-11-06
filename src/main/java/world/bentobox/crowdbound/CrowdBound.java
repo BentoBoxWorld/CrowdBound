@@ -36,6 +36,7 @@ import world.bentobox.crowdbound.commands.player.ClaimCommand;
 import world.bentobox.crowdbound.commands.player.SpawnCommand;
 import world.bentobox.crowdbound.listeners.BorderShower;
 import world.bentobox.crowdbound.listeners.NetherChunkMaker;
+import world.bentobox.crowdbound.listeners.NetherRedstoneListener;
 import world.bentobox.crowdbound.listeners.PlayerListener;
 import world.bentobox.crowdbound.listeners.TeamListener;
 
@@ -131,6 +132,7 @@ public class CrowdBound extends GameModeAddon {
         this.registerListener(playerListener);
         this.registerListener(netherChunkMaker);
         this.registerListener(new TeamListener(this));
+        this.registerListener(new NetherRedstoneListener(this));
         
         // Register recipe for warped compass
         registerWarpedCompassRecipe();
